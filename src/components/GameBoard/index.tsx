@@ -111,6 +111,36 @@ const BoardGrid = styled(Box)({
   },
 });
 
+const calculateHighlights = (cells: Cells | null, index: number, value: Digits) => {
+  if (!cells) return new Set<number>();
+  
+  const row = Math.floor(index / 9);
+  const col = index % 9;
+  
+  const newHighlights = new Set<number>();
+
+  // Highlight row
+  for (let i = 0; i < 9; i++) {
+    newHighlights.add(row * 9 + i);
+  }
+
+  // Highlight column
+  for (let i = 0; i < 9; i++) {
+    newHighlights.add(i * 9 + col);
+  }
+
+  // Highlight same values if value is not zero
+  if (value !== 0) {
+    for (let i = 0; i < 81; i++) {
+      if (cells[i].value === value) {
+        newHighlights.add(i);
+      }
+    }
+  }
+
+  return newHighlights;
+};
+
 export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }: GameBoardProps) {
   const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
   const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
@@ -120,12 +150,10 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
   const handleCellClick = (index: number) => {
     if (!cells) return;
 
-    // Show popup only when clicking the previously clicked cell
+    // Show popup when clicking the previously clicked cell
     if (index === clickedCell) {
       if (cells[index].isChangeable) {
         setSelectedForEdit(index);
-        setHighlightedCells(new Set());
-        setClickedCell(null);
       }
       return;
     }
@@ -161,6 +189,10 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
     setSelectedForEdit(null);
   };
 
+  const handlePopupClose = () => {
+    setSelectedForEdit(null);
+  };
+
   return (
     <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
       <BoardGrid>
@@ -182,14 +214,19 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
       {selectedForEdit !== null && cells?.[selectedForEdit] && (
         <CellPopup
           open={true}
-          onClose={() => setSelectedForEdit(null)}
+          onClose={handlePopupClose}
           selectedValue={cells[selectedForEdit].value}
           hints={cells[selectedForEdit].draftValues}
           isPencilMode={isPencilMode}
           onPencilModeChange={setIsPencilMode}
           onValueSelect={(value) => {
             onCellValueChange(selectedForEdit, value);
+            setHighlightedCells(calculateHighlights(cells, selectedForEdit, value));
+            setClickedCell(selectedForEdit);
             setSelectedForEdit(null);
+          }}
+          onClearCell={(value) => {
+            onCellValueChange(selectedForEdit, value);
           }}
           onHintToggle={(hint) => {
             onCellHintToggle(selectedForEdit, hint);

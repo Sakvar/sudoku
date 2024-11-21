@@ -17,6 +17,7 @@ interface CellPopupProps {
   isPencilMode: boolean;
   onPencilModeChange: (isOn: boolean) => void;
   onValueSelect: (value: Digits) => void;
+  onClearCell: (value: Digits) => void;
   onHintToggle: (hint: number) => void;
 }
 
@@ -41,15 +42,22 @@ export default function CellPopup({
   isPencilMode,
   onPencilModeChange,
   onValueSelect,
+  onClearCell,
   onHintToggle,
 }: CellPopupProps) {
+  const handlePencilModeChange = (checked: boolean) => {
+    if (checked && selectedValue !== 0) {
+      onClearCell(0);
+    }
+    onPencilModeChange(checked);
+  };
+
   const handleNumberClick = (value: number) => {
     if (isPencilMode) {
       onHintToggle(value);
     } else {
       onValueSelect(value as Digits);
       if (selectedValue === value) {
-        // If clicking the same number, clear the cell
         onValueSelect(0);
       }
       onClose();
@@ -63,7 +71,7 @@ export default function CellPopup({
           control={
             <Switch
               checked={isPencilMode}
-              onChange={(e) => onPencilModeChange(e.target.checked)}
+              onChange={(e) => handlePencilModeChange(e.target.checked)}
             />
           }
           label="Pencil mode"
