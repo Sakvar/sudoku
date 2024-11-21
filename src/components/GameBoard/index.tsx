@@ -18,6 +18,18 @@ const Item = styled(Paper)(({ theme }) => ({
   justifyContent: 'center',
   position: 'relative',
   cursor: 'pointer',
+  '&.highlighted': {
+    backgroundColor: '#e3f2fd',
+    '&:hover': {
+      backgroundColor: '#bbdefb',
+    },
+  },
+  '&.clicked': {
+    backgroundColor: '#bbdefb',
+    '&:hover': {
+      backgroundColor: '#90caf9',
+    },
+  },
   '&:hover': {
     backgroundColor: '#f0f0f0',
   },
@@ -100,20 +112,54 @@ const BoardGrid = styled(Box)({
 });
 
 export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }: GameBoardProps) {
-  const [selectedCell, setSelectedCell] = React.useState<number | null>(null);
+  const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
+  const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
   const [isPencilMode, setIsPencilMode] = React.useState(false);
+  const [clickedCell, setClickedCell] = React.useState<number | null>(null);
 
   const handleCellClick = (index: number) => {
-    if (cells?.[index].isChangeable) {
-      setSelectedCell(index);
+    if (!cells) return;
+
+    // Show popup only when clicking the previously clicked cell
+    if (index === clickedCell) {
+      if (cells[index].isChangeable) {
+        setSelectedForEdit(index);
+        setHighlightedCells(new Set());
+        setClickedCell(null);
+      }
+      return;
     }
-  };
 
-  const handlePopupClose = () => {
-    setSelectedCell(null);
-  };
+    // First click or clicking a different cell - highlight cells
+    const row = Math.floor(index / 9);
+    const col = index % 9;
+    const value = cells[index].value;
 
-  const selectedCellData = selectedCell !== null ? cells?.[selectedCell] : null;
+    const newHighlights = new Set<number>();
+
+    // Highlight row
+    for (let i = 0; i < 9; i++) {
+      newHighlights.add(row * 9 + i);
+    }
+
+    // Highlight column
+    for (let i = 0; i < 9; i++) {
+      newHighlights.add(i * 9 + col);
+    }
+
+    // Highlight same values if cell is not empty
+    if (value !== 0) {
+      for (let i = 0; i < 81; i++) {
+        if (cells[i].value === value) {
+          newHighlights.add(i);
+        }
+      }
+    }
+
+    setHighlightedCells(newHighlights);
+    setClickedCell(index);
+    setSelectedForEdit(null);
+  };
 
   return (
     <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
@@ -122,6 +168,10 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
           <Item 
             key={index} 
             elevation={1}
+            className={`
+              ${highlightedCells.has(index) ? 'highlighted' : ''}
+              ${index === clickedCell ? 'clicked' : ''}
+            `}
             onClick={() => handleCellClick(index)}
           >
             {cells && <CellContent cell={cells[index]} />}
@@ -129,19 +179,20 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
         ))}
       </BoardGrid>
 
-      {selectedCell !== null && selectedCellData && (
+      {selectedForEdit !== null && cells?.[selectedForEdit] && (
         <CellPopup
           open={true}
-          onClose={handlePopupClose}
-          selectedValue={selectedCellData.value}
-          hints={selectedCellData.draftValues}
+          onClose={() => setSelectedForEdit(null)}
+          selectedValue={cells[selectedForEdit].value}
+          hints={cells[selectedForEdit].draftValues}
           isPencilMode={isPencilMode}
           onPencilModeChange={setIsPencilMode}
           onValueSelect={(value) => {
-            onCellValueChange(selectedCell, value);
+            onCellValueChange(selectedForEdit, value);
+            setSelectedForEdit(null);
           }}
           onHintToggle={(hint) => {
-            onCellHintToggle(selectedCell, hint);
+            onCellHintToggle(selectedForEdit, hint);
           }}
         />
       )}
