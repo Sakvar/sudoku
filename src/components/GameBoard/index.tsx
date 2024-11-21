@@ -1,9 +1,12 @@
-import { Cells, Cell } from '@/SudokuGame';
+import { Cells, Cell, Digits } from '@/SudokuGame';
 import { Box, Paper, styled } from '@mui/material';
+import CellPopup from '../CellPopup';
+import React from 'react';
 
 interface GameBoardProps {
   cells: Cells | null;
-  onCellClick?: (index: number) => void;
+  onCellValueChange: (index: number, value: Digits) => void;
+  onCellHintToggle: (index: number, hint: number) => void;
 }
 
 const Item = styled(Paper)(({ theme }) => ({
@@ -96,8 +99,21 @@ const BoardGrid = styled(Box)({
   },
 });
 
-export default function GameBoard({ cells, onCellClick }: GameBoardProps) {
-  if (!cells) return null;
+export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }: GameBoardProps) {
+  const [selectedCell, setSelectedCell] = React.useState<number | null>(null);
+  const [isPencilMode, setIsPencilMode] = React.useState(false);
+
+  const handleCellClick = (index: number) => {
+    if (cells?.[index].isChangeable) {
+      setSelectedCell(index);
+    }
+  };
+
+  const handlePopupClose = () => {
+    setSelectedCell(null);
+  };
+
+  const selectedCellData = selectedCell !== null ? cells?.[selectedCell] : null;
 
   return (
     <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
@@ -106,12 +122,29 @@ export default function GameBoard({ cells, onCellClick }: GameBoardProps) {
           <Item 
             key={index} 
             elevation={1}
-            onClick={() => onCellClick?.(index)}
+            onClick={() => handleCellClick(index)}
           >
-            <CellContent cell={cells[index]} />
+            {cells && <CellContent cell={cells[index]} />}
           </Item>
         ))}
       </BoardGrid>
+
+      {selectedCell !== null && selectedCellData && (
+        <CellPopup
+          open={true}
+          onClose={handlePopupClose}
+          selectedValue={selectedCellData.value}
+          hints={selectedCellData.draftValues}
+          isPencilMode={isPencilMode}
+          onPencilModeChange={setIsPencilMode}
+          onValueSelect={(value) => {
+            onCellValueChange(selectedCell, value);
+          }}
+          onHintToggle={(hint) => {
+            onCellHintToggle(selectedCell, hint);
+          }}
+        />
+      )}
     </Box>
   );
 }

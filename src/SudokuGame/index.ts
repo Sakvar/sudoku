@@ -73,7 +73,7 @@ export class Board {
 }
 
 export class Cell {
-  private draftValues: boolean[] & { length: 9 };
+  public draftValues: boolean[] & { length: 9 };
   private userValue: Digits;
   private initialValue: Digits;
   private solutionValue: Digits;
