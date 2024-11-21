@@ -231,6 +231,8 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
           onHintToggle={(hint) => {
             onCellHintToggle(selectedForEdit, hint);
           }}
+          cellIndex={selectedForEdit}
+          cells={cells}
         />
       )}
     </Box>

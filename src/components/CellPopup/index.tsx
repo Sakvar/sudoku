@@ -19,6 +19,8 @@ interface CellPopupProps {
   onValueSelect: (value: Digits) => void;
   onClearCell: (value: Digits) => void;
   onHintToggle: (hint: number) => void;
+  cellIndex: number;
+  cells: Cell[];
 }
 
 const NumberGrid = styled(Box)({
@@ -32,7 +34,49 @@ const NumberButton = styled(ToggleButton)({
   width: 48,
   height: 48,
   fontSize: '1.2rem',
+  '&.invalid': {
+    opacity: 0.3,
+    cursor: 'not-allowed',
+    '&:hover': {
+      backgroundColor: 'inherit',
+    }
+  }
 });
+
+const isNumberValid = (index: number, value: number, cells: Cell[]): boolean => {
+  if (value === 0) return true;
+  
+  const row = Math.floor(index / 9);
+  const col = index % 9;
+  const boxStartRow = Math.floor(row / 3) * 3;
+  const boxStartCol = Math.floor(col / 3) * 3;
+
+  // Check row
+  for (let i = 0; i < 9; i++) {
+    if (i !== col && cells[row * 9 + i].value === value) {
+      return false;
+    }
+  }
+
+  // Check column
+  for (let i = 0; i < 9; i++) {
+    if (i !== row && cells[i * 9 + col].value === value) {
+      return false;
+    }
+  }
+
+  // Check 3x3 box
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      const cellIndex = (boxStartRow + i) * 9 + (boxStartCol + j);
+      if (cellIndex !== index && cells[cellIndex].value === value) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
 
 export default function CellPopup({
   open,
@@ -44,6 +88,8 @@ export default function CellPopup({
   onValueSelect,
   onClearCell,
   onHintToggle,
+  cellIndex,
+  cells,
 }: CellPopupProps) {
   const handlePencilModeChange = (checked: boolean) => {
     if (checked && selectedValue !== 0) {
@@ -77,16 +123,21 @@ export default function CellPopup({
           label="Pencil mode"
         />
         <NumberGrid>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
-            <NumberButton
-              key={number}
-              value={number}
-              selected={isPencilMode ? hints[number - 1] : selectedValue === number}
-              onClick={() => handleNumberClick(number)}
-            >
-              {number}
-            </NumberButton>
-          ))}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => {
+            const isValid = isNumberValid(cellIndex, number, cells);
+            return (
+              <NumberButton
+                key={number}
+                value={number}
+                selected={isPencilMode ? hints[number - 1] : selectedValue === number}
+                onClick={() => handleNumberClick(number)}
+                disabled={!isPencilMode && !isValid}
+                className={!isPencilMode && !isValid ? 'invalid' : ''}
+              >
+                {number}
+              </NumberButton>
+            );
+          })}
         </NumberGrid>
       </Box>
     </Dialog>
