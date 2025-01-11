@@ -37,13 +37,6 @@ export default function GameWrapper() {
     }
   }, []);
 
-  const handleCellClick = (index: number) => {
-    const cell = gameBoardState?.cells[index];
-    if (cell?.isChangeable) {
-      // Show input dialog or handle keyboard input
-    }
-  };
-
   const handleCellValueChange = (index: number, value: Digits) => {
     if (gameBoardState) {
       gameBoardState.cells[index].setUserValue(value);
