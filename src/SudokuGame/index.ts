@@ -1,6 +1,3 @@
-import { error } from "console";
-
-
 export class SudokuGame {
   globalGameState: GlobalGameState;
   
