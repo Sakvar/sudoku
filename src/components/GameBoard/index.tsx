@@ -9,7 +9,7 @@ interface GameBoardProps {
   onCellHintToggle: (index: number, hint: number) => void;
 }
 
-const Item = styled(Paper)(({ theme }) => ({
+const Item = styled(Paper)({
   textAlign: 'center',
   height: 40,
   width: 40,
@@ -33,7 +33,7 @@ const Item = styled(Paper)(({ theme }) => ({
   '&:hover': {
     backgroundColor: '#f0f0f0',
   },
-}));
+});
 
 const InitialValue = styled('span')({
   fontSize: '1.2rem',
