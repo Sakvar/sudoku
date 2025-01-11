@@ -1,8 +1,7 @@
-import Image from "next/image";
-import GameWrapper from "@/components/GameWrapper";
+import TelegramWrapper from "@/components/TelegramWrapper";
 
 export default function Home() {
   return (
-    <GameWrapper/>
+    <TelegramWrapper />
   );
 }

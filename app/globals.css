@@ -23,3 +23,28 @@ body {
 .hidden {
   display: none;
 }
+
+.telegram-app {
+  /* Use Telegram theme variables */
+  --tg-theme-bg-color: var(--background);
+  --tg-theme-text-color: var(--foreground);
+  
+  background-color: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color);
+  min-height: 100vh;
+  padding: 16px;
+}
+
+/* Adjust GameBoard styles for mobile */
+@media (max-width: 600px) {
+  .board-grid {
+    gap: 4px;
+    padding: 8px;
+  }
+  
+  .cell {
+    font-size: 1rem;
+    min-width: 32px;
+    min-height: 32px;
+  }
+}
