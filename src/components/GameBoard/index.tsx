@@ -1,8 +1,8 @@
-import { Cells, Cell, Digits } from '@/SudokuGame';
-import { Box, Paper, styled } from '@mui/material';
-import CellPopup from '../CellPopup';
+import { Cells, Digits, Cell } from '@/SudokuGame';
 import React from 'react';
 import { GameSettingsType } from '@/types';
+import styles from './GameBoard.module.css';
+import CellPopup from '../CellPopup';
 
 interface GameBoardProps {
   cells: Cells | null;
@@ -11,82 +11,9 @@ interface GameBoardProps {
   settings: GameSettingsType;
 }
 
-const Item = styled(Paper)({
-  textAlign: 'center',
-  height: 40,
-  width: 40,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  position: 'relative',
-  cursor: 'pointer',
-  '&.highlighted': {
-    backgroundColor: '#e3f2fd',
-    '&:hover': {
-      backgroundColor: '#bbdefb',
-    },
-  },
-  '&.clicked': {
-    backgroundColor: '#bbdefb',
-    '&:hover': {
-      backgroundColor: '#90caf9',
-    },
-  },
-  '&:hover': {
-    backgroundColor: '#f0f0f0',
-  },
-});
-
-const InitialValue = styled('span')({
-  fontSize: '1.2rem',
-  fontWeight: 'bold',
-});
-
-const UserValue = styled('span')({
-  fontSize: '1.2rem',
-  color: '#666',
-});
-
-const HintsContainer = styled('div')({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gridTemplateRows: 'repeat(3, 1fr)',
-  position: 'absolute',
-  top: 1,
-  left: 1,
-  right: 1,
-  bottom: 1,
-  fontSize: '0.5rem',
-  gap: 0,
-  lineHeight: '1',
-  '& > span': {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#666',
-    padding: 0,
-  }
-});
-
-const HintCell = styled('div')<{ $isHighlighted?: boolean }>(({ $isHighlighted }) => ({
-  fontSize: '0.8em',
-  color: $isHighlighted ? '#fff' : 'inherit',
-  fontWeight: $isHighlighted ? '700' : 'normal',
-  backgroundColor: $isHighlighted ? '#2196f3' : 'transparent',
-  borderRadius: '4px',
-  padding: '1px 3px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    backgroundColor: $isHighlighted ? '#1976d2' : 'transparent',
-  }
-}));
-
 interface CellContentProps {
   cell: Cell;
-  highlightedHints?: Set<number>;
+  highlightedHints: Set<number>;
   settings: GameSettingsType;
 }
 
@@ -236,17 +163,72 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     setSelectedForEdit(null);
   }, [cells, clickedCell]);
 
+  const findObviousCells = React.useCallback((cells: Cells): Set<number> => {
+    console.log('Finding obvious cells...');
+    const obviousCells = new Set<number>();
+    
+    if (!cells) return obviousCells;
+    
+    for (let i = 0; i < 81; i++) {
+      if (cells[i].value !== 0) {
+        console.log(`Cell ${i} has value ${cells[i].value}`);
+        continue;
+      }
+      
+      const row = Math.floor(i / 9);
+      const col = i % 9;
+      const boxStartRow = Math.floor(row / 3) * 3;
+      const boxStartCol = Math.floor(col / 3) * 3;
+      
+      const possibleValues = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      
+      // Remove values from row
+      for (let c = 0; c < 9; c++) {
+        const value = cells[row * 9 + c].value;
+        if (value !== 0) possibleValues.delete(value);
+      }
+      
+      // Remove values from column
+      for (let r = 0; r < 9; r++) {
+        const value = cells[r * 9 + col].value;
+        if (value !== 0) possibleValues.delete(value);
+      }
+      
+      // Remove values from 3x3 box
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const value = cells[(boxStartRow + r) * 9 + boxStartCol + c].value;
+          if (value !== 0) possibleValues.delete(value);
+        }
+      }
+      
+      if (possibleValues.size === 1) {
+        obviousCells.add(i);
+      }
+    }
+    
+    console.log('Obvious cells:', Array.from(obviousCells));
+    return obviousCells;
+  }, []);
+
+  // Force recalculation when cells change
+  const obviousCells = React.useMemo(() => {
+    if (!cells || !settings.highlightAllObviousCells) return new Set<number>();
+    return findObviousCells(cells);
+  }, [cells, settings.highlightAllObviousCells, findObviousCells]);
+
+  // Add obvious class to cell className
+  const getCellClassName = (index: number, isHighlighted: boolean) => {
+    return `${styles.cell} ${isHighlighted ? styles.highlighted : ''} ${obviousCells.has(index) ? styles.obvious : ''}`;
+  };
+
   return (
-    <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
-      <BoardGrid>
+    <div className={styles.gameBoard}>
+      <div className={styles.boardGrid}>
         {Array.from({ length: 81 }).map((_, index) => (
-          <Item 
+          <div 
             key={index} 
-            elevation={1}
-            className={`
-              ${highlightedCells.has(index) ? 'highlighted' : ''}
-              ${index === clickedCell ? 'clicked' : ''}
-            `}
+            className={getCellClassName(index, highlightedCells.has(index))}
             onClick={() => handleCellClick(index)}
           >
             {cells && <CellContent 
@@ -254,9 +236,9 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
               highlightedHints={highlightedHints}
               settings={settings}
             />}
-          </Item>
+          </div>
         ))}
-      </BoardGrid>
+      </div>
       {selectedForEdit !== null && cells?.[selectedForEdit] && (
         <CellPopup
           open={true}
@@ -318,51 +300,34 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
           settings={settings}
         />
       )}
-    </Box>
+    </div>
   );
 }
 
-const BoardGrid = styled(Box)({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(9, 1fr)',
-  gap: 1,
-  padding: 2,
-  backgroundColor: '#ccc',
-  '& > *:nth-of-type(3n)': {
-    borderRight: '2px solid #666',
-  },
-  '& > *:nth-of-type(n+19):nth-of-type(-n+27)': {
-    borderBottom: '2px solid #666',
-  },
-  '& > *:nth-of-type(n+46):nth-of-type(-n+54)': {
-    borderBottom: '2px solid #666',
-  },
-});
-
 const CellContent = React.memo(({ cell, highlightedHints, settings }: CellContentProps) => {
   if (cell.getInitialValue !== 0) {
-    return <InitialValue>{cell.getInitialValue}</InitialValue>;
+    return <span className={styles.initialValue}>{cell.getInitialValue}</span>;
   }
 
   if (cell.getUserValue !== 0) {
-    return <UserValue>{cell.getUserValue}</UserValue>;
+    return <span className={styles.userValue}>{cell.getUserValue}</span>;
   }
 
   if (cell.draftValues.some(v => v)) {
     return (
-      <HintsContainer>
+      <div className={styles.hintsContainer}>
         {cell.draftValues.map((isSet, index) => {
           const shouldHighlight = settings.highlightSameHints && highlightedHints?.has(index + 1);
           return (
-            <HintCell 
+            <div 
               key={index}
-              $isHighlighted={isSet && shouldHighlight}
+              className={`${styles.hint} ${isSet && shouldHighlight ? styles.highlighted : ''}`}
             >
               {isSet ? index + 1 : ''}
-            </HintCell>
+            </div>
           );
         })}
-      </HintsContainer>
+      </div>
     );
   }
 

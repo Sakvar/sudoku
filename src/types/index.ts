@@ -9,4 +9,5 @@ export interface GameSettingsType {
     hideImpossibleValuesInHints: boolean;
     highlightCurrentQuadrant: boolean;
     highlightQuadrantsWithSameNumber: boolean;
+    highlightAllObviousCells: boolean;
 }

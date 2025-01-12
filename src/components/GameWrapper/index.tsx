@@ -45,11 +45,23 @@ export default function GameWrapper() {
       hideImpossibleValuesInHints: true,
       highlightCurrentQuadrant: true,
       highlightQuadrantsWithSameNumber: true,
+      highlightAllObviousCells: true,
     };
     
     const savedSettings = localStorage.getItem('sudokuGameSettings');
     if (savedSettings) {
-      return { ...defaultSettings, ...JSON.parse(savedSettings) };
+      const parsedSettings = JSON.parse(savedSettings);
+      
+      // Migrate old setting name to new one
+      if ('highlightObviousCell' in parsedSettings) {
+        parsedSettings.highlightAllObviousCells = parsedSettings.highlightObviousCell;
+        delete parsedSettings.highlightObviousCell;
+        
+        // Save migrated settings back to localStorage
+        localStorage.setItem('sudokuGameSettings', JSON.stringify(parsedSettings));
+      }
+      
+      return { ...defaultSettings, ...parsedSettings };
     }
     
     return defaultSettings;
@@ -207,14 +219,22 @@ export default function GameWrapper() {
 
   const handleCellValueChange = (index: number, value: Digits) => {
     if (gameBoardState) {
-      gameBoardState.cells[index].setUserValue(value);
-      const newBoardState = new Board(gameBoardState.difficulty, gameBoardState.cells);
+      // Create a new cells array to ensure state update
+      const newCells = [...gameBoardState.cells] as Cells;
+      newCells[index].setUserValue(value);
+      
+      // Create new board with new cells
+      const newBoardState = new Board(gameBoardState.difficulty, newCells);
+      
+      // Force a rerender of GameBoard by creating a new cells reference
+      newBoardState.cells = [...newBoardState.cells] as Cells;
+
+      // Update board state
       setGameBoardState(newBoardState);
 
-      // Check if game is solved after each move
-      if (checkGameSolved(newBoardState.cells)) {
+      // Check if game is solved
+      if (checkGameSolved(newCells)) {
         handleGameSolved();
-        // You might want to show a victory message
         alert(`Congratulations! You solved the puzzle in ${time} seconds!`);
       }
     }
