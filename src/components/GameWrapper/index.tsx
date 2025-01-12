@@ -17,7 +17,7 @@ interface SavedGameState {
       hints: boolean[];
     }[];
   } | null;
-  time: number;
+  timestamp: number;
 }
 
 export default function GameWrapper() {
@@ -59,7 +59,10 @@ export default function GameWrapper() {
         const parsed: SavedGameState = JSON.parse(savedState);
         setGameState(parsed.gameState);
         setDifficultyState(parsed.difficultyState);
-        setTime(parsed.time);
+        
+        // Calculate elapsed time from start timestamp
+        const elapsedTime = Math.floor((Date.now() - parsed.timestamp) / 1000);
+        setTime(elapsedTime);
         
         if (parsed.boardState) {
           const restoredCells = parsed.boardState.cells.map(cell => {
@@ -100,25 +103,12 @@ export default function GameWrapper() {
             hints: cell.draftValues,
           }))
         },
-        time,
+        timestamp: Date.now()
       };
       
-      console.log('Saving game state:', stateToSave);
       localStorage.setItem('sudokuGameState', JSON.stringify(stateToSave));
     }
   }, [gameState, difficultyState, gameBoardState]);
-
-  // Separate effect for time updates
-  useEffect(() => {
-    if (gameState === 'playing') {
-      const savedState = localStorage.getItem('sudokuGameState');
-      if (savedState) {
-        const currentState = JSON.parse(savedState);
-        currentState.time = time;
-        localStorage.setItem('sudokuGameState', JSON.stringify(currentState));
-      }
-    }
-  }, [time, gameState]);
 
   const handleNewGame = () => {
     // Clear saved state when starting new game
@@ -214,12 +204,41 @@ export default function GameWrapper() {
       // Create new board immediately
       const newBoard = new Board(difficulty);
       setGameBoardState(newBoard);
+      
+      // Save initial game state
+      const initialState: SavedGameState = {
+        gameState: 'playing',
+        difficultyState: difficulty,
+        boardState: {
+          difficulty: difficulty,
+          cells: newBoard.cells.map(cell => ({
+            value: cell.value,
+            isInitial: cell.getInitialValue !== 0,
+            userValue: cell.getUserValue,
+            hints: cell.draftValues,
+          }))
+        },
+        timestamp: Date.now()  // Save initial timestamp
+      };
+      localStorage.setItem('sudokuGameState', JSON.stringify(initialState));
+      
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to create new game:', error);
       setGameState('notStarted');
       setIsLoading(false);
     }
+  };
+
+  const formatTime = (totalSeconds: number): string => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   if (!mounted) {
@@ -229,13 +248,37 @@ export default function GameWrapper() {
   return (
     <div>
       <div>
-        Game - {difficultyState} - Time: {time}s
+        Game - {difficultyState} - 
+        <span 
+          onClick={() => alert(`Total time: ${time} seconds`)}
+          style={{ cursor: 'pointer' }}
+        >
+          Time: {formatTime(time)}
+        </span>
       </div>
-      {gameState === 'notStarted' && (
-        <div className="startButton">
-          <Button variant="outlined" onClick={handleNewGame}>New Game</Button>
-        </div>
-      )}
+      <Stack spacing={2} sx={{ mt: 2, mb: 2 }}>
+        <Button 
+          variant="outlined" 
+          onClick={handleNewGame}
+          disabled={gameState === 'selectDifficulty'}
+        >
+          New Game
+        </Button>
+        
+        {gameState === 'playing' && (
+          <Button 
+            variant="outlined" 
+            onClick={() => {
+              if (gameBoardState) {
+                const newBoard = new Board(gameBoardState.difficulty);
+                setGameBoardState(newBoard);
+              }
+            }}
+          >
+            Reset
+          </Button>
+        )}
+      </Stack>
       
       {gameState === 'selectDifficulty' && (
         <Stack spacing={2}>
@@ -243,7 +286,7 @@ export default function GameWrapper() {
             <Button 
               key={difficulty}
               variant="outlined" 
-              onClick={handleStartGame.bind(null, difficulty as SudokuGuruDifficulty)}
+              onClick={() => handleStartGame(difficulty as SudokuGuruDifficulty)}
             >
               {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
             </Button>
