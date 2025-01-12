@@ -109,7 +109,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     const cellHighlights = new Set<number>();
     const hintHighlights = new Set<number>();
 
-    // Row and column highlights
+    // Row and column highlights for clicked cell
     if (settings.highlightRowAndColumn) {
       for (let i = 0; i < 9; i++) {
         cellHighlights.add(row * 9 + i);
@@ -119,25 +119,34 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
 
     // Number highlights
     if (value !== 0) {
-      // Always highlight the clicked cell
       cellHighlights.add(index);
 
       if (settings.highlightSameNumbers) {
-        // Highlight cells with same number
+        // First find all cells with the same number
+        const matchingCells: number[] = [];
         for (let i = 0; i < 81; i++) {
           if (cells[i].value === value) {
             cellHighlights.add(i);
+            matchingCells.push(i);
           }
+        }
+
+        // Then highlight crosses for all matching cells if enabled
+        if (settings.highlightCrossForNumbers) {
+          matchingCells.forEach(cellIndex => {
+            const matchRow = Math.floor(cellIndex / 9);
+            const matchCol = cellIndex % 9;
+            // Highlight entire row and column
+            for (let i = 0; i < 9; i++) {
+              cellHighlights.add(matchRow * 9 + i);
+              cellHighlights.add(i * 9 + matchCol);
+            }
+          });
         }
       }
       
       if (settings.highlightSameHints) {
-        // When clicking a number, add it to hint highlights
         hintHighlights.add(value);
-        console.log('Added number to hint highlights:', {
-          value,
-          hintHighlights: Array.from(hintHighlights)
-        });
       }
     } 
     
@@ -149,11 +158,26 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
       if (clickedHintIndex !== -1 && selectedCellHints.filter(isSet => isSet).length === 1) {
         hintHighlights.add(clickedHintIndex + 1);
         
-        // Find cells with the same hint
+        // First find all cells with the same hint
+        const matchingCells: number[] = [];
         for (let i = 0; i < 81; i++) {
           if (i !== index && cells[i].value === 0 && cells[i].draftValues[clickedHintIndex]) {
             cellHighlights.add(i);
+            matchingCells.push(i);
           }
+        }
+
+        // Then highlight crosses for all matching cells if enabled
+        if (settings.highlightCrossForHints) {
+          matchingCells.forEach(cellIndex => {
+            const matchRow = Math.floor(cellIndex / 9);
+            const matchCol = cellIndex % 9;
+            // Highlight entire row and column
+            for (let i = 0; i < 9; i++) {
+              cellHighlights.add(matchRow * 9 + i);
+              cellHighlights.add(i * 9 + matchCol);
+            }
+          });
         }
       }
     }
@@ -166,13 +190,6 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     if (clickedCell !== null && cells) {
       const value = cells[clickedCell].value;
       const { cellHighlights, hintHighlights } = calculateHighlights(cells, clickedCell, value, settings);
-      
-      console.log('Setting highlights:', {
-        value,
-        cellHighlights: Array.from(cellHighlights),
-        hintHighlights: Array.from(hintHighlights),
-        settingEnabled: settings.highlightSameHints
-      });
       
       setHighlightedCells(cellHighlights);
       // Always set the hint highlights if we have them
@@ -307,23 +324,10 @@ const CellContent = React.memo(({ cell, highlightedHints, settings }: CellConten
   }
 
   if (cell.draftValues.some(v => v)) {
-    console.log('Rendering hints cell:', {
-      draftValues: cell.draftValues,
-      highlightedHints: highlightedHints ? Array.from(highlightedHints) : [],
-      settingEnabled: settings.highlightSameHints
-    });
-
     return (
       <HintsContainer>
         {cell.draftValues.map((isSet, index) => {
           const shouldHighlight = settings.highlightSameHints && highlightedHints?.has(index + 1);
-          console.log('Hint cell:', {
-            index: index + 1,
-            isSet,
-            shouldHighlight,
-            hasHighlightedHints: !!highlightedHints,
-            highlightedHintsContent: highlightedHints ? Array.from(highlightedHints) : []
-          });
           return (
             <HintCell 
               key={index}
