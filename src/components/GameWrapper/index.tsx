@@ -44,11 +44,11 @@ export default function GameWrapper() {
       hideImpossibleValuesInSelector: true,
       hideImpossibleValuesInHints: true,
       highlightCurrentQuadrant: true,
+      highlightQuadrantsWithSameNumber: true,
     };
     
     const savedSettings = localStorage.getItem('sudokuGameSettings');
     if (savedSettings) {
-      // Merge saved settings with defaults to ensure new settings are included
       return { ...defaultSettings, ...JSON.parse(savedSettings) };
     }
     

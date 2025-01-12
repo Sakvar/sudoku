@@ -139,6 +139,21 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
           if (cells[i].value === value) {
             cellHighlights.add(i);
             matchingCells.push(i);
+            
+            // Highlight quadrants containing same number
+            if (settings.highlightQuadrantsWithSameNumber) {
+              const matchRow = Math.floor(i / 9);
+              const matchCol = i % 9;
+              const matchBoxStartRow = Math.floor(matchRow / 3) * 3;
+              const matchBoxStartCol = Math.floor(matchCol / 3) * 3;
+              
+              // Add all cells in the matching number's quadrant
+              for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                  cellHighlights.add((matchBoxStartRow + r) * 9 + (matchBoxStartCol + c));
+                }
+              }
+            }
           }
         }
 

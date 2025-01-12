@@ -8,4 +8,5 @@ export interface GameSettingsType {
     hideImpossibleValuesInSelector: boolean;
     hideImpossibleValuesInHints: boolean;
     highlightCurrentQuadrant: boolean;
-  }
+    highlightQuadrantsWithSameNumber: boolean;
+}
