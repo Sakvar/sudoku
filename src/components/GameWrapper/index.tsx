@@ -270,8 +270,17 @@ export default function GameWrapper() {
             variant="outlined" 
             onClick={() => {
               if (gameBoardState) {
-                const newBoard = new Board(gameBoardState.difficulty);
-                setGameBoardState(newBoard);
+                // Create new cells with same initial values but cleared user inputs
+                const resetCells = gameBoardState.cells.map(cell => {
+                  const newCell = new Cell({
+                    initialValue: cell.getInitialValue,
+                    solutionValue: cell.getInitialValue
+                  });
+                  return newCell;
+                });
+                
+                // Create new board with same difficulty but reset cells
+                setGameBoardState(new Board(gameBoardState.difficulty, resetCells as Cells));
               }
             }}
           >
