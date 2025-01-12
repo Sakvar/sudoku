@@ -5,7 +5,7 @@ import GameWrapper from '../GameWrapper';
 declare global {
   interface Window {
     Telegram?: {
-      WebApp: {
+      WebApp?: {
         ready: () => void;
         expand: () => void;
         isExpanded: boolean;
@@ -19,12 +19,12 @@ export default function TelegramWrapper() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const isTelegramWebApp = window.Telegram?.WebApp;
+    const webApp = window.Telegram?.WebApp;
     
-    if (isTelegramWebApp) {
+    if (webApp) {
       try {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
+        webApp.ready();
+        webApp.expand();
         setIsReady(true);
       } catch (error) {
         console.error('Failed to initialize Telegram WebApp:', error);
