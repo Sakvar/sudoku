@@ -133,7 +133,7 @@ const BoardGrid = styled(Box)({
   },
 });
 
-const calculateHighlights = (cells: Cells | null, index: number, value: Digits) => {
+const calculateHighlights = (cells: Cells | null, index: number, value: Digits, settings: GameSettingsType) => {
   if (!cells) return new Set<number>();
   
   const row = Math.floor(index / 9);
@@ -141,18 +141,21 @@ const calculateHighlights = (cells: Cells | null, index: number, value: Digits) 
   
   const newHighlights = new Set<number>();
 
-  // Highlight row
-  for (let i = 0; i < 9; i++) {
-    newHighlights.add(row * 9 + i);
+  // Only highlight row and column if enabled
+  if (settings.highlightRowAndColumn) {
+    // Highlight row
+    for (let i = 0; i < 9; i++) {
+      newHighlights.add(row * 9 + i);
+    }
+
+    // Highlight column
+    for (let i = 0; i < 9; i++) {
+      newHighlights.add(i * 9 + col);
+    }
   }
 
-  // Highlight column
-  for (let i = 0; i < 9; i++) {
-    newHighlights.add(i * 9 + col);
-  }
-
-  // Highlight same values if value is not zero
-  if (value !== 0) {
+  // Highlight same values if enabled and value is not zero
+  if (value !== 0 && settings.highlightSameNumbers) {
     for (let i = 0; i < 81; i++) {
       if (cells[i].value === value) {
         newHighlights.add(i);
@@ -250,7 +253,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
           onPencilModeChange={setIsPencilMode}
           onValueSelect={(value) => {
             onCellValueChange(selectedForEdit, value);
-            setHighlightedCells(calculateHighlights(cells, selectedForEdit, value));
+            setHighlightedCells(calculateHighlights(cells, selectedForEdit, value, settings));
             setClickedCell(selectedForEdit);
             setSelectedForEdit(null);
           }}
@@ -262,6 +265,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
           }}
           cellIndex={selectedForEdit}
           cells={cells}
+          settings={settings}
         />
       )}
     </Box>

@@ -1,4 +1,5 @@
 import { Digits, Cell } from '@/SudokuGame';
+import { GameSettingsType } from '@/types';
 import { 
   Box, 
   Dialog, 
@@ -20,6 +21,7 @@ interface CellPopupProps {
   onHintToggle: (hint: number) => void;
   cellIndex: number;
   cells: Cell[];
+  settings: GameSettingsType;
 }
 
 const NumberGrid = styled(Box)({
@@ -89,6 +91,7 @@ export default function CellPopup({
   onHintToggle,
   cellIndex,
   cells,
+  settings,
 }: CellPopupProps) {
   const handlePencilModeChange = (checked: boolean) => {
     if (checked && selectedValue !== 0) {
@@ -109,6 +112,10 @@ export default function CellPopup({
     }
   };
 
+  const shouldCheckValidity = isPencilMode ? 
+    settings.hideImpossibleValuesInHints : 
+    settings.hideImpossibleValuesInSelector;
+
   return (
     <Dialog open={open} onClose={onClose}>
       <Box sx={{ p: 2 }}>
@@ -123,15 +130,16 @@ export default function CellPopup({
         />
         <NumberGrid>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => {
-            const isValid = isNumberValid(cellIndex, number, cells);
+            const isValid = shouldCheckValidity ? isNumberValid(cellIndex, number, cells) : true;
+
             return (
               <NumberButton
                 key={number}
                 value={number}
                 selected={isPencilMode ? hints[number - 1] : selectedValue === number}
                 onClick={() => handleNumberClick(number)}
-                disabled={!isPencilMode && !isValid}
-                className={!isPencilMode && !isValid ? 'invalid' : ''}
+                disabled={!isValid}
+                className={shouldCheckValidity && !isValid ? 'invalid' : ''}
               >
                 {number}
               </NumberButton>
