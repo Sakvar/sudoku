@@ -40,7 +40,7 @@ export default function GameWrapper() {
   const handleCellValueChange = (index: number, value: Digits) => {
     if (gameBoardState) {
       gameBoardState.cells[index].setUserValue(value);
-      setGameBoardState(gameBoardState.clone());
+      setGameBoardState(new Board(gameBoardState.difficulty, gameBoardState.cells));
     }
   };
 

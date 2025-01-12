@@ -26,19 +26,26 @@ export class Board {
   private initialized: Promise<void>;
   public difficulty: SudokuGuruDifficulty;
   
-  constructor(difficulty: SudokuGuruDifficulty, levelNumber?:number) {
+  constructor(difficulty: SudokuGuruDifficulty, levelNumber?: number);
+  constructor(difficulty: SudokuGuruDifficulty, cells?: Cells);
+  constructor(difficulty: SudokuGuruDifficulty, param?: number | Cells) {
     this.difficulty = difficulty;
-    this.cells = new Array<Cell>(81) as Cells;
-    // Initialize with empty cells first
-    for (let i = 0; i < 81; i++) {
-      this.cells[i] = new Cell({
-        initialValue: 0,
-        solutionValue: 0
-      });
-    }
     
-    // Store the initialization promise
-    this.initialized = this.loadSudokuGuruLevel(difficulty, levelNumber);
+    if (Array.isArray(param)) {
+      // If cells are provided, use them directly
+      this.cells = param;
+      this.initialized = Promise.resolve();
+    } else {
+      // Initialize new game
+      this.cells = new Array<Cell>(81) as Cells;
+      for (let i = 0; i < 81; i++) {
+        this.cells[i] = new Cell({
+          initialValue: 0,
+          solutionValue: 0
+        });
+      }
+      this.initialized = this.loadSudokuGuruLevel(difficulty, param);
+    }
   }
   
   // Add this method to wait for initialization
