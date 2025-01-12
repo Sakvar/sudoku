@@ -36,12 +36,12 @@ export default function TelegramWrapper() {
   }, []);
 
   if (!isReady) {
-    return <div>Loading...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   return (
-    <div className="game-container">
+    <main className="game-container">
       <GameWrapper />
-    </div>
+    </main>
   );
 } 

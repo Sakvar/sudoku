@@ -17,5 +17,5 @@ export default function ClientRoot({ children }: ClientRootProps) {
     return null;
   }
 
-  return children;
+  return <>{children}</>;
 } 

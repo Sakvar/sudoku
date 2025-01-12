@@ -37,21 +37,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClientRoot>
-      <html 
-        lang="en" 
-        className={`${geistSans.variable} ${geistMono.variable}`}
-      >
-        <head>
-          <Script 
-            src="https://telegram.org/js/telegram-web-app.js"
-            strategy="beforeInteractive"
-          />
-        </head>
-        <body className="antialiased">
-          {children}
-        </body>
-      </html>
-    </ClientRoot>
+    <html 
+      lang="en" 
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
+      <head>
+        <Script 
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body className="antialiased">
+        <ClientRoot>{children}</ClientRoot>
+      </body>
+    </html>
   );
 }

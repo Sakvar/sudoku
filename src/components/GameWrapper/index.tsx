@@ -1,9 +1,24 @@
 "use client"
 import Button from '@mui/material/Button';
 import React, { useState, useEffect } from 'react';
-import { GlobalGameState, SudokuGuruDifficulty, Board, Cell, Digits } from '@/SudokuGame';
+import { GlobalGameState, SudokuGuruDifficulty, Board, Cell, Digits, Cells } from '@/SudokuGame';
 import { Stack } from '@mui/system';
 import GameBoard from '../GameBoard';
+
+interface SavedGameState {
+  gameState: GlobalGameState;
+  difficultyState: SudokuGuruDifficulty | '';
+  boardState: {
+    difficulty: SudokuGuruDifficulty;
+    cells: {
+      value: number;
+      isInitial: boolean;
+      userValue: number;
+      hints: boolean[];
+    }[];
+  } | null;
+  time: number;
+}
 
 export default function GameWrapper() {
   const [mounted, setMounted] = React.useState(false);
@@ -36,7 +51,78 @@ export default function GameWrapper() {
     };
   }, [gameState, intervalId]);
 
+  // Load saved game state on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('sudokuGameState');
+    if (savedState) {
+      try {
+        const parsed: SavedGameState = JSON.parse(savedState);
+        setGameState(parsed.gameState);
+        setDifficultyState(parsed.difficultyState);
+        setTime(parsed.time);
+        
+        if (parsed.boardState) {
+          const restoredCells = parsed.boardState.cells.map(cell => {
+            const newCell = new Cell({
+              initialValue: cell.value as Digits,
+              solutionValue: cell.value as Digits
+            });
+            newCell.setUserValue(cell.userValue as Digits);
+            cell.hints.forEach((isSet, index) => {
+              if (isSet) newCell.toggleHint(index + 1);
+            });
+            return newCell;
+          });
+          
+          // Ensure we have a complete set of cells (81 for a Sudoku board)
+          if (restoredCells.length === 81) {
+            setGameBoardState(new Board(parsed.boardState.difficulty, restoredCells as Cells));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore game state:', error);
+      }
+    }
+  }, []);
+
+  // First effect for game state
+  useEffect(() => {
+    if (gameState === 'playing' && gameBoardState) {
+      const stateToSave: SavedGameState = {
+        gameState,
+        difficultyState,
+        boardState: {
+          difficulty: gameBoardState.difficulty,
+          cells: gameBoardState.cells.map(cell => ({
+            value: cell.value,
+            isInitial: cell.getInitialValue !== 0,
+            userValue: cell.getUserValue,
+            hints: cell.draftValues,
+          }))
+        },
+        time,
+      };
+      
+      console.log('Saving game state:', stateToSave);
+      localStorage.setItem('sudokuGameState', JSON.stringify(stateToSave));
+    }
+  }, [gameState, difficultyState, gameBoardState]);
+
+  // Separate effect for time updates
+  useEffect(() => {
+    if (gameState === 'playing') {
+      const savedState = localStorage.getItem('sudokuGameState');
+      if (savedState) {
+        const currentState = JSON.parse(savedState);
+        currentState.time = time;
+        localStorage.setItem('sudokuGameState', JSON.stringify(currentState));
+      }
+    }
+  }, [time, gameState]);
+
   const handleNewGame = () => {
+    // Clear saved state when starting new game
+    localStorage.removeItem('sudokuGameState');
     setGameState('selectDifficulty');
     setGameBoardState(null);
     setTime(0);
