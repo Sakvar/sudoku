@@ -87,34 +87,198 @@ const HintCell = styled('div')<{ $isHighlighted?: boolean }>(({ $isHighlighted }
 interface CellContentProps {
   cell: Cell;
   highlightedHints?: Set<number>;
+  settings: GameSettingsType;
 }
 
-const CellContent = ({ cell, highlightedHints }: CellContentProps) => {
-  if (cell.getInitialValue !== 0) {
-    return <InitialValue>{cell.getInitialValue}</InitialValue>;
-  }
+export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, settings }: GameBoardProps) {
+  const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
+  const [highlightedHints, setHighlightedHints] = React.useState<Set<number>>(new Set());
+  const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
+  const [isPencilMode, setIsPencilMode] = React.useState(false);
+  const [clickedCell, setClickedCell] = React.useState<number | null>(null);
 
-  if (cell.getUserValue !== 0) {
-    return <UserValue>{cell.getUserValue}</UserValue>;
-  }
+  const calculateHighlights = React.useCallback((cells: Cells | null, index: number, value: Digits, settings: GameSettingsType) => {
+    if (!cells) return {
+      cellHighlights: new Set<number>(),
+      hintHighlights: new Set<number>()
+    };
+    
+    const row = Math.floor(index / 9);
+    const col = index % 9;
+    
+    const cellHighlights = new Set<number>();
+    const hintHighlights = new Set<number>();
 
-  if (cell.draftValues.some(v => v)) {
-    return (
-      <HintsContainer>
-        {cell.draftValues.map((isSet, index) => (
-          <HintCell 
-            key={index}
-            $isHighlighted={isSet && highlightedHints?.has(index + 1)}
+    // Row and column highlights
+    if (settings.highlightRowAndColumn) {
+      for (let i = 0; i < 9; i++) {
+        cellHighlights.add(row * 9 + i);
+        cellHighlights.add(i * 9 + col);
+      }
+    }
+
+    // Number highlights
+    if (value !== 0) {
+      // Always highlight the clicked cell
+      cellHighlights.add(index);
+
+      if (settings.highlightSameNumbers) {
+        // Highlight cells with same number
+        for (let i = 0; i < 81; i++) {
+          if (cells[i].value === value) {
+            cellHighlights.add(i);
+          }
+        }
+      }
+      
+      if (settings.highlightSameHints) {
+        // When clicking a number, add it to hint highlights
+        hintHighlights.add(value);
+        console.log('Added number to hint highlights:', {
+          value,
+          hintHighlights: Array.from(hintHighlights)
+        });
+      }
+    } 
+    
+    // Hint highlights
+    else if (settings.highlightSameHints) {
+      const selectedCellHints = cells[index].draftValues;
+      const clickedHintIndex = selectedCellHints.findIndex(isSet => isSet);
+      
+      if (clickedHintIndex !== -1 && selectedCellHints.filter(isSet => isSet).length === 1) {
+        hintHighlights.add(clickedHintIndex + 1);
+        
+        // Find cells with the same hint
+        for (let i = 0; i < 81; i++) {
+          if (i !== index && cells[i].value === 0 && cells[i].draftValues[clickedHintIndex]) {
+            cellHighlights.add(i);
+          }
+        }
+      }
+    }
+
+    return { cellHighlights, hintHighlights };
+  }, []);
+
+  // Update the useEffect to make sure we're setting the hints correctly
+  React.useEffect(() => {
+    if (clickedCell !== null && cells) {
+      const value = cells[clickedCell].value;
+      const { cellHighlights, hintHighlights } = calculateHighlights(cells, clickedCell, value, settings);
+      
+      console.log('Setting highlights:', {
+        value,
+        cellHighlights: Array.from(cellHighlights),
+        hintHighlights: Array.from(hintHighlights),
+        settingEnabled: settings.highlightSameHints
+      });
+      
+      setHighlightedCells(cellHighlights);
+      // Always set the hint highlights if we have them
+      setHighlightedHints(hintHighlights);
+    }
+  }, [cells, clickedCell, settings, calculateHighlights]);
+
+  const handleCellClick = React.useCallback((index: number) => {
+    if (!cells) return;
+
+    if (index === clickedCell) {
+      if (cells[index].isChangeable) {
+        setSelectedForEdit(index);
+      }
+      return;
+    }
+
+    setClickedCell(index);
+    setSelectedForEdit(null);
+  }, [cells, clickedCell]);
+
+  return (
+    <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
+      <BoardGrid>
+        {Array.from({ length: 81 }).map((_, index) => (
+          <Item 
+            key={index} 
+            elevation={1}
+            className={`
+              ${highlightedCells.has(index) ? 'highlighted' : ''}
+              ${index === clickedCell ? 'clicked' : ''}
+            `}
+            onClick={() => handleCellClick(index)}
           >
-            {isSet ? index + 1 : ''}
-          </HintCell>
+            {cells && <CellContent 
+              cell={cells[index]}
+              highlightedHints={highlightedHints}
+              settings={settings}
+            />}
+          </Item>
         ))}
-      </HintsContainer>
-    );
-  }
-
-  return null;
-};
+      </BoardGrid>
+      {selectedForEdit !== null && cells?.[selectedForEdit] && (
+        <CellPopup
+          open={true}
+          onClose={() => setSelectedForEdit(null)}
+          selectedValue={cells[selectedForEdit].value}
+          hints={cells[selectedForEdit].draftValues}
+          isPencilMode={isPencilMode}
+          onPencilModeChange={setIsPencilMode}
+          onValueSelect={(value) => {
+            onCellValueChange(selectedForEdit, value);
+            setClickedCell(selectedForEdit);
+            
+            if (cells) {
+              const { cellHighlights, hintHighlights } = calculateHighlights(
+                cells,
+                selectedForEdit,
+                value,
+                settings
+              );
+              setHighlightedCells(cellHighlights);
+              setHighlightedHints(
+                value === 0 && settings.highlightSameHints ? hintHighlights : new Set()
+              );
+            }
+            setSelectedForEdit(null);
+          }}
+          onClearCell={(value) => {
+            onCellValueChange(selectedForEdit, value);
+            setClickedCell(selectedForEdit);
+            
+            if (cells) {
+              const { cellHighlights, hintHighlights } = calculateHighlights(
+                cells,
+                selectedForEdit,
+                0,
+                settings
+              );
+              setHighlightedCells(cellHighlights);
+              setHighlightedHints(settings.highlightSameHints ? hintHighlights : new Set());
+            }
+          }}
+          onHintToggle={(hint) => {
+            onCellHintToggle(selectedForEdit, hint);
+            setClickedCell(selectedForEdit);
+            
+            if (cells) {
+              const { cellHighlights, hintHighlights } = calculateHighlights(
+                cells,
+                selectedForEdit,
+                0,
+                settings
+              );
+              setHighlightedCells(cellHighlights);
+              setHighlightedHints(settings.highlightSameHints ? hintHighlights : new Set());
+            }
+          }}
+          cellIndex={selectedForEdit}
+          cells={cells}
+          settings={settings}
+        />
+      )}
+    </Box>
+  );
+}
 
 const BoardGrid = styled(Box)({
   display: 'grid',
@@ -133,141 +297,47 @@ const BoardGrid = styled(Box)({
   },
 });
 
-const calculateHighlights = (cells: Cells | null, index: number, value: Digits, settings: GameSettingsType) => {
-  if (!cells) return new Set<number>();
-  
-  const row = Math.floor(index / 9);
-  const col = index % 9;
-  
-  const newHighlights = new Set<number>();
-
-  // Only highlight row and column if enabled
-  if (settings.highlightRowAndColumn) {
-    // Highlight row
-    for (let i = 0; i < 9; i++) {
-      newHighlights.add(row * 9 + i);
-    }
-
-    // Highlight column
-    for (let i = 0; i < 9; i++) {
-      newHighlights.add(i * 9 + col);
-    }
+const CellContent = React.memo(({ cell, highlightedHints, settings }: CellContentProps) => {
+  if (cell.getInitialValue !== 0) {
+    return <InitialValue>{cell.getInitialValue}</InitialValue>;
   }
 
-  // Highlight same values if enabled and value is not zero
-  if (value !== 0 && settings.highlightSameNumbers) {
-    for (let i = 0; i < 81; i++) {
-      if (cells[i].value === value) {
-        newHighlights.add(i);
-      }
-    }
+  if (cell.getUserValue !== 0) {
+    return <UserValue>{cell.getUserValue}</UserValue>;
   }
 
-  return newHighlights;
-};
+  if (cell.draftValues.some(v => v)) {
+    console.log('Rendering hints cell:', {
+      draftValues: cell.draftValues,
+      highlightedHints: highlightedHints ? Array.from(highlightedHints) : [],
+      settingEnabled: settings.highlightSameHints
+    });
 
-export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, settings }: GameBoardProps) {
-  const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
-  const [highlightedHints, setHighlightedHints] = React.useState<Set<number>>(new Set());
-  const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
-  const [isPencilMode, setIsPencilMode] = React.useState(false);
-  const [clickedCell, setClickedCell] = React.useState<number | null>(null);
+    return (
+      <HintsContainer>
+        {cell.draftValues.map((isSet, index) => {
+          const shouldHighlight = settings.highlightSameHints && highlightedHints?.has(index + 1);
+          console.log('Hint cell:', {
+            index: index + 1,
+            isSet,
+            shouldHighlight,
+            hasHighlightedHints: !!highlightedHints,
+            highlightedHintsContent: highlightedHints ? Array.from(highlightedHints) : []
+          });
+          return (
+            <HintCell 
+              key={index}
+              $isHighlighted={isSet && shouldHighlight}
+            >
+              {isSet ? index + 1 : ''}
+            </HintCell>
+          );
+        })}
+      </HintsContainer>
+    );
+  }
 
-  const handleCellClick = (index: number) => {
-    if (!cells) return;
+  return null;
+});
 
-    if (index === clickedCell) {
-      if (cells[index].isChangeable) {
-        setSelectedForEdit(index);
-      }
-      return;
-    }
-
-    const row = Math.floor(index / 9);
-    const col = index % 9;
-    const selectedCell = cells[index];
-    const value = selectedCell.value;
-
-    const newHighlights = new Set<number>();
-    const newHintHighlights = new Set<number>();
-
-    // Apply highlighting based on settings
-    if (settings.highlightRowAndColumn) {
-      // Highlight row and column
-      for (let i = 0; i < 9; i++) {
-        newHighlights.add(row * 9 + i);
-        newHighlights.add(i * 9 + col);
-      }
-    }
-
-    // Highlight matching values if enabled
-    if (value !== 0 && settings.highlightSameNumbers) {
-      newHintHighlights.add(value);
-      
-      for (let i = 0; i < 81; i++) {
-        const currentCell = cells[i];
-        if (currentCell.value === value) {
-          newHighlights.add(i);
-        }
-      }
-    }
-
-    setHighlightedCells(newHighlights);
-    setHighlightedHints(newHintHighlights);
-    setClickedCell(index);
-    setSelectedForEdit(null);
-  };
-
-  const handlePopupClose = () => {
-    setSelectedForEdit(null);
-  };
-
-  return (
-    <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
-      <BoardGrid>
-        {Array.from({ length: 81 }).map((_, index) => (
-          <Item 
-            key={index} 
-            elevation={1}
-            className={`
-              ${highlightedCells.has(index) ? 'highlighted' : ''}
-              ${index === clickedCell ? 'clicked' : ''}
-            `}
-            onClick={() => handleCellClick(index)}
-          >
-            {cells && <CellContent 
-              cell={cells[index]}
-              highlightedHints={highlightedHints}
-            />}
-          </Item>
-        ))}
-      </BoardGrid>
-
-      {selectedForEdit !== null && cells?.[selectedForEdit] && (
-        <CellPopup
-          open={true}
-          onClose={handlePopupClose}
-          selectedValue={cells[selectedForEdit].value}
-          hints={cells[selectedForEdit].draftValues}
-          isPencilMode={isPencilMode}
-          onPencilModeChange={setIsPencilMode}
-          onValueSelect={(value) => {
-            onCellValueChange(selectedForEdit, value);
-            setHighlightedCells(calculateHighlights(cells, selectedForEdit, value, settings));
-            setClickedCell(selectedForEdit);
-            setSelectedForEdit(null);
-          }}
-          onClearCell={(value) => {
-            onCellValueChange(selectedForEdit, value);
-          }}
-          onHintToggle={(hint) => {
-            onCellHintToggle(selectedForEdit, hint);
-          }}
-          cellIndex={selectedForEdit}
-          cells={cells}
-          settings={settings}
-        />
-      )}
-    </Box>
-  );
-}
+CellContent.displayName = 'CellContent';
