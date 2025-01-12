@@ -1,7 +1,5 @@
-import TelegramWrapper from "@/components/TelegramWrapper";
+import TelegramContainer from '@/components/TelegramContainer';
 
 export default function Home() {
-  return (
-    <TelegramWrapper />
-  );
+  return <TelegramContainer />;
 }

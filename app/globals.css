@@ -7,11 +7,11 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, 
+body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -20,86 +20,26 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.hidden {
-  display: none;
+.telegram-app-container {
+  height: 100vh;
+  width: 100%;
 }
 
 .telegram-app {
-  /* Use Telegram theme variables */
   --tg-theme-bg-color: var(--background);
   --tg-theme-text-color: var(--foreground);
   
   background-color: var(--tg-theme-bg-color);
   color: var(--tg-theme-text-color);
-  min-height: 100vh;
+  height: 100%;
   padding: 16px;
-}
-
-/* Adjust GameBoard styles for mobile */
-@media (max-width: 600px) {
-  .board-grid {
-    gap: 4px;
-    padding: 8px;
-  }
-  
-  .cell {
-    font-size: 1rem;
-    min-width: 32px;
-    min-height: 32px;
-  }
-}
-
-/* Add or update these styles */
-.cell {
-  position: relative;
   width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid #ccc;
-  font-size: 1.5rem;
-  /* Add padding to prevent numbers from touching borders */
-  padding: 2px;
+  box-sizing: border-box;
 }
 
-.cell-hints {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  font-size: 0.7rem; /* Smaller font size for hints */
-  padding: 2px;
-}
-
-.hint-number {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* Add a bit of padding to prevent touching grid lines */
-  padding: 1px;
-}
-
-/* Adjust the board grid gaps */
-.board-grid {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 1px;
-  border: 2px solid #666;
-  /* Add padding around the entire board */
-  padding: 2px;
-}
-
-/* Add stronger borders for 3x3 sections */
-.cell:nth-child(3n) {
-  border-right: 2px solid #666;
-}
-
-.cell:nth-child(n+19):nth-child(-n+27),
-.cell:nth-child(n+46):nth-child(-n+54) {
-  border-bottom: 2px solid #666;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
