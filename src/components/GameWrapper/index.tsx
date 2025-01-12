@@ -1,7 +1,7 @@
 "use client"
 import Button from '@mui/material/Button';
 import React, { useState, useEffect } from 'react';
-import { GlobalGameState, SudokuGuruDifficulty, Board, Digits } from '@/SudokuGame';
+import { GlobalGameState, SudokuGuruDifficulty, Board, Cell, Digits } from '@/SudokuGame';
 import { Stack } from '@mui/system';
 import GameBoard from '../GameBoard';
 
