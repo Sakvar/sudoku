@@ -136,7 +136,6 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
           matchingCells.forEach(cellIndex => {
             const matchRow = Math.floor(cellIndex / 9);
             const matchCol = cellIndex % 9;
-            // Highlight entire row and column
             for (let i = 0; i < 9; i++) {
               cellHighlights.add(matchRow * 9 + i);
               cellHighlights.add(i * 9 + matchCol);
@@ -147,37 +146,37 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
       
       if (settings.highlightSameHints) {
         hintHighlights.add(value);
+        
+        // Find cells with matching hints and highlight their crosses if enabled
+        if (settings.highlightCrossForHints) {
+          for (let i = 0; i < 81; i++) {
+            if (cells[i].value === 0 && cells[i].draftValues[value - 1]) {
+              const hintRow = Math.floor(i / 9);
+              const hintCol = i % 9;
+              // Highlight crosses for cells with matching hints
+              for (let j = 0; j < 9; j++) {
+                cellHighlights.add(hintRow * 9 + j);
+                cellHighlights.add(j * 9 + hintCol);
+              }
+            }
+          }
+        }
       }
     } 
     
-    // Hint highlights
+    // Hint highlights (when clicking on a cell with hints)
     else if (settings.highlightSameHints) {
       const selectedCellHints = cells[index].draftValues;
       const clickedHintIndex = selectedCellHints.findIndex(isSet => isSet);
       
       if (clickedHintIndex !== -1 && selectedCellHints.filter(isSet => isSet).length === 1) {
         hintHighlights.add(clickedHintIndex + 1);
+        cellHighlights.add(index);
         
-        // First find all cells with the same hint
-        const matchingCells: number[] = [];
         for (let i = 0; i < 81; i++) {
           if (i !== index && cells[i].value === 0 && cells[i].draftValues[clickedHintIndex]) {
             cellHighlights.add(i);
-            matchingCells.push(i);
           }
-        }
-
-        // Then highlight crosses for all matching cells if enabled
-        if (settings.highlightCrossForHints) {
-          matchingCells.forEach(cellIndex => {
-            const matchRow = Math.floor(cellIndex / 9);
-            const matchCol = cellIndex % 9;
-            // Highlight entire row and column
-            for (let i = 0; i < 9; i++) {
-              cellHighlights.add(matchRow * 9 + i);
-              cellHighlights.add(i * 9 + matchCol);
-            }
-          });
         }
       }
     }
