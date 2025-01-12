@@ -10,6 +10,7 @@ export default function ClientRoot({ children }: ClientRootProps) {
 
   useEffect(() => {
     setMounted(true);
+    return () => setMounted(false);
   }, []);
 
   if (!mounted) {
