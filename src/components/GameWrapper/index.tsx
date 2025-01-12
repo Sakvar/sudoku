@@ -47,7 +47,7 @@ export default function GameWrapper() {
   const handleCellHintToggle = (index: number, hint: number) => {
     if (gameBoardState) {
       gameBoardState.cells[index].toggleHint(hint);
-      setGameBoardState(gameBoardState.clone());
+      setGameBoardState(new Board(gameBoardState.difficulty, gameBoardState.cells));
     }
   };
 
