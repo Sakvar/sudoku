@@ -24,8 +24,10 @@ export class SudokuGame {
 export class Board {
   public cells: Cells;
   private initialized: Promise<void>;
+  public difficulty: SudokuGuruDifficulty;
   
   constructor(difficulty: SudokuGuruDifficulty, levelNumber?:number) {
+    this.difficulty = difficulty;
     this.cells = new Array<Cell>(81) as Cells;
     // Initialize with empty cells first
     for (let i = 0; i < 81; i++) {
@@ -80,6 +82,14 @@ export class Cell {
     this.solutionValue = solutionValue;
     this.draftValues = Array(9).fill(false) as boolean[] & { length: 9 };
     this.userValue = 0;
+  }
+  
+  get getInitialValue(): Digits {
+    return this.initialValue;
+  }
+  
+  get getUserValue(): Digits {
+    return this.userValue;
   }
   
   get isChangeable() {

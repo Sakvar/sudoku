@@ -69,13 +69,13 @@ interface CellContentProps {
 
 const CellContent = ({ cell }: CellContentProps) => {
   // If it's an initial value, show it bold
-  if (cell.initialValue !== 0) {
-    return <InitialValue>{cell.initialValue}</InitialValue>;
+  if (cell.getInitialValue !== 0) {
+    return <InitialValue>{cell.getInitialValue}</InitialValue>;
   }
 
   // If user entered a main value, show it (not bold)
-  if (cell.userValue !== 0) {
-    return <UserValue>{cell.userValue}</UserValue>;
+  if (cell.getUserValue !== 0) {
+    return <UserValue>{cell.getUserValue}</UserValue>;
   }
 
   // If there are hints, show the hints grid

@@ -1,4 +1,4 @@
-import { Digits } from '@/SudokuGame';
+import { Digits, Cell } from '@/SudokuGame';
 import { 
   Box, 
   Dialog, 

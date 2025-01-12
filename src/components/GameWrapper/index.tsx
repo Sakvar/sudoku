@@ -1,7 +1,7 @@
 "use client"
 import Button from '@mui/material/Button';
 import React from 'react';
-import { GlobalGameState, SudokuGuruDifficulty, Board, Digits } from '@/SudokuGame';
+import { GlobalGameState, SudokuGuruDifficulty, Board, Digits, Cells } from '@/SudokuGame';
 import { Stack } from '@mui/system';
 import GameBoard from '../GameBoard';
 
@@ -40,14 +40,18 @@ export default function GameWrapper() {
   const handleCellValueChange = (index: number, value: Digits) => {
     if (gameBoardState) {
       gameBoardState.cells[index].setUserValue(value);
-      setGameBoardState({ ...gameBoardState }); // Force re-render
+      const newBoard = new Board(gameBoardState.difficulty);
+      newBoard.cells = gameBoardState.cells.slice() as Cells;
+      setGameBoardState(newBoard);
     }
   };
 
   const handleCellHintToggle = (index: number, hint: number) => {
     if (gameBoardState) {
       gameBoardState.cells[index].toggleHint(hint);
-      setGameBoardState({ ...gameBoardState }); // Force re-render
+      const newBoard = new Board(gameBoardState.difficulty);
+      newBoard.cells = gameBoardState.cells.slice() as Cells;
+      setGameBoardState(newBoard);
     }
   };
 
@@ -86,7 +90,7 @@ export default function GameWrapper() {
             <div>Loading...</div>
           ) : (
             <GameBoard 
-              cells={gameBoardState?.cells}
+              cells={gameBoardState?.cells || null}
               onCellValueChange={handleCellValueChange}
               onCellHintToggle={handleCellHintToggle}
             />

@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   },
   // Configure the base path for GitHub Pages
   basePath: isGithubActions ? `/${repo}` : '',
-  assetPrefix: isGithubActions ? `/${repo}/` : './',
+  assetPrefix: isGithubActions ? `/${repo}` : '/',
 };
 
 export default nextConfig;
