@@ -216,18 +216,18 @@ export default function GameWrapper() {
     setGameState('notStarted');
   };
 
-  const handleStartGame = (difficulty: SudokuGuruDifficulty) => {
-    setGameState('playing');
-    setDifficultyState(difficulty);
+  const handleStartGame = async (difficulty: SudokuGuruDifficulty) => {
     setIsLoading(true);
-    setTime(0); // Reset timer
+    setTime(0);
 
     try {
       // Create new board immediately
       const newBoard = new Board(difficulty);
-      setGameBoardState(newBoard);
       
-      // Save initial game state
+      // Wait for the board to be fully initialized
+      await newBoard.initialize(); // Make sure Board class has this method
+      
+      // Only save and update state after board is fully ready
       const initialState: SavedGameState = {
         gameState: 'playing',
         difficultyState: difficulty,
@@ -240,14 +240,20 @@ export default function GameWrapper() {
             hints: cell.draftValues,
           }))
         },
-        timestamp: Date.now()  // Save initial timestamp
+        timestamp: Date.now()
       };
+
+      // Save to localStorage only after board is fully initialized
       localStorage.setItem('sudokuGameState', JSON.stringify(initialState));
       
-      setIsLoading(false);
+      // Update React state after everything is ready
+      setGameState('playing');
+      setDifficultyState(difficulty);
+      setGameBoardState(newBoard);
     } catch (error) {
       console.error('Failed to create new game:', error);
       setGameState('notStarted');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -282,77 +288,82 @@ export default function GameWrapper() {
         </Button>
       </div>
 
-      <Stack 
-        spacing={2} 
-        sx={{ 
-          width: '100%',
-          '& .MuiButton-root': {
-            height: '36px',
-            borderRadius: '4px',
-            textTransform: 'uppercase',
-            color: 'rgb(25, 118, 210)',
-            borderColor: 'rgb(25, 118, 210)',
-            '&:hover': {
-              borderColor: 'rgb(25, 118, 210)',
-              backgroundColor: 'rgba(25, 118, 210, 0.04)'
-            }
-          }
-        }}
-      >
-        {gameState !== 'selectDifficulty' && (
-          <Button 
-            variant="outlined" 
-            onClick={handleNewGame}
-            fullWidth
-          >
-            New Game
-          </Button>
-        )}
-        
-        {gameState === 'playing' && (
-          <Button 
-            variant="outlined"
-            onClick={() => {
-              if (gameBoardState) {
-                const resetCells = gameBoardState.cells.map(cell => {
-                  const newCell = new Cell({
-                    initialValue: cell.getInitialValue,
-                    solutionValue: cell.getInitialValue
-                  });
-                  return newCell;
-                });
-                
-                setGameBoardState(new Board(gameBoardState.difficulty, resetCells as Cells));
-              }
-            }}
-            fullWidth
-          >
-            Start from scratch
-          </Button>
-        )}
-
-        {gameState === 'selectDifficulty' && (
-          Object.values(SudokuGuruDifficulty).map((difficulty) => (
-            <Button 
-              key={difficulty}
-              variant="outlined" 
-              onClick={() => handleStartGame(difficulty as SudokuGuruDifficulty)}
-              fullWidth
-            >
-              {difficulty}
-            </Button>
-          ))
-        )}
-      </Stack>
-
-      {gameState === 'playing' && (
-        <div className={styles.gameBoard}>
-          <GameBoard
-            cells={gameBoardState?.cells || null}
-            onCellValueChange={handleCellValueChange}
-            onCellHintToggle={handleCellHintToggle}
-          />
+      {isLoading ? (
+        <div className={styles.loadingContainer}>
+          Loading...
         </div>
+      ) : (
+        <>
+          <Stack spacing={2} sx={{ 
+            width: '100%',
+            '& .MuiButton-root': {
+              height: '36px',
+              borderRadius: '4px',
+              textTransform: 'uppercase',
+              color: 'rgb(25, 118, 210)',
+              borderColor: 'rgb(25, 118, 210)',
+              '&:hover': {
+                borderColor: 'rgb(25, 118, 210)',
+                backgroundColor: 'rgba(25, 118, 210, 0.04)'
+              }
+            }
+          }}>
+            {gameState !== 'selectDifficulty' && (
+              <Button 
+                variant="outlined" 
+                onClick={handleNewGame}
+                fullWidth
+              >
+                New Game
+              </Button>
+            )}
+            
+            {gameState === 'playing' && (
+              <Button 
+                variant="outlined"
+                onClick={() => {
+                  if (gameBoardState) {
+                    const resetCells = gameBoardState.cells.map(cell => {
+                      const newCell = new Cell({
+                        initialValue: cell.getInitialValue,
+                        solutionValue: cell.getInitialValue
+                      });
+                      return newCell;
+                    });
+                    
+                    setGameBoardState(new Board(gameBoardState.difficulty, resetCells as Cells));
+                  }
+                }}
+                fullWidth
+              >
+                Start from scratch
+              </Button>
+            )}
+
+            {gameState === 'selectDifficulty' && (
+              Object.values(SudokuGuruDifficulty).map((difficulty) => (
+                <Button 
+                  key={difficulty}
+                  variant="outlined" 
+                  onClick={() => handleStartGame(difficulty as SudokuGuruDifficulty)}
+                  fullWidth
+                >
+                  {difficulty}
+                </Button>
+              ))
+            )}
+          </Stack>
+
+          {gameState === 'playing' && (
+            <div className={styles.gameBoard}>
+              <GameBoard
+                cells={gameBoardState?.cells || null}
+                onCellValueChange={handleCellValueChange}
+                onCellHintToggle={handleCellHintToggle}
+              />
+            </div>
+          )}
+        </>
       )}
       <Dialog 
         open={isSettingsOpen} 
