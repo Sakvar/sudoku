@@ -4,6 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { GlobalGameState, SudokuGuruDifficulty, Board, Cell, Digits, Cells } from '@/SudokuGame';
 import { Stack } from '@mui/system';
 import GameBoard from '../GameBoard';
+import SettingsIcon from '@mui/icons-material/Settings';
+import GameSettings from '../GameSettings';
+import { GameSettingsType } from '@/types';
+import styles from './GameWrapper.module.css';
+import { Dialog } from '@mui/material';
 
 interface SavedGameState {
   gameState: GlobalGameState;
@@ -28,6 +33,23 @@ export default function GameWrapper() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [time, setTime] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState<GameSettingsType>({
+    highlightRowAndColumn: false,
+    highlightSameNumbers: true,
+    highlightSameHints: true,
+    highlightCrossForNumbers: false,
+    highlightCrossForHints: false,
+    hideImpossibleValuesInSelector: true,
+    hideImpossibleValuesInHints: false,
+  });
+
+  const handleSettingChange = (key: keyof GameSettingsType, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
   React.useEffect(() => {
     setMounted(true);
@@ -246,28 +268,50 @@ export default function GameWrapper() {
   }
 
   return (
-    <div>
-      <div>
-        Game - {difficultyState} - 
-        <span 
-          onClick={() => alert(`Total time: ${time} seconds`)}
-          style={{ cursor: 'pointer' }}
-        >
-          Time: {formatTime(time)}
-        </span>
-      </div>
-      <Stack spacing={2} sx={{ mt: 2, mb: 2 }}>
+    <div className={styles.gameWrapper}>
+      <div className={styles.gameHeader}>
+        <div className={styles.title}>
+          Game - {difficultyState} - Time: {formatTime(time)}
+        </div>
         <Button 
-          variant="outlined" 
-          onClick={handleNewGame}
-          disabled={gameState === 'selectDifficulty'}
+          className={styles.settingsButton}
+          onClick={() => setIsSettingsOpen(true)}
+          aria-label="Settings"
         >
-          New Game
+          <SettingsIcon />
         </Button>
+      </div>
+
+      <Stack 
+        spacing={2} 
+        sx={{ 
+          width: '100%',
+          '& .MuiButton-root': {
+            height: '36px',
+            borderRadius: '4px',
+            textTransform: 'uppercase',
+            color: 'rgb(25, 118, 210)',
+            borderColor: 'rgb(25, 118, 210)',
+            '&:hover': {
+              borderColor: 'rgb(25, 118, 210)',
+              backgroundColor: 'rgba(25, 118, 210, 0.04)'
+            }
+          }
+        }}
+      >
+        {gameState !== 'selectDifficulty' && (
+          <Button 
+            variant="outlined" 
+            onClick={handleNewGame}
+            fullWidth
+          >
+            New Game
+          </Button>
+        )}
         
         {gameState === 'playing' && (
           <Button 
-            variant="outlined" 
+            variant="outlined"
             onClick={() => {
               if (gameBoardState) {
                 const resetCells = gameBoardState.cells.map(cell => {
@@ -281,39 +325,47 @@ export default function GameWrapper() {
                 setGameBoardState(new Board(gameBoardState.difficulty, resetCells as Cells));
               }
             }}
+            fullWidth
           >
             Start from scratch
           </Button>
         )}
-      </Stack>
-      
-      {gameState === 'selectDifficulty' && (
-        <Stack spacing={2}>
-          {Object.values(SudokuGuruDifficulty).map((difficulty) => (
+
+        {gameState === 'selectDifficulty' && (
+          Object.values(SudokuGuruDifficulty).map((difficulty) => (
             <Button 
               key={difficulty}
               variant="outlined" 
               onClick={() => handleStartGame(difficulty as SudokuGuruDifficulty)}
+              fullWidth
             >
-              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+              {difficulty}
             </Button>
-          ))}
-        </Stack>
-      )}
-      
+          ))
+        )}
+      </Stack>
+
       {gameState === 'playing' && (
-        <div className="gameBoard">
-          {isLoading ? (
-            <div>Loading...</div>
-          ) : (
-            <GameBoard 
-              cells={gameBoardState?.cells || null}
-              onCellValueChange={handleCellValueChange}
-              onCellHintToggle={handleCellHintToggle}
-            />
-          )}
+        <div className={styles.gameBoard}>
+          <GameBoard
+            cells={gameBoardState?.cells || null}
+            onCellValueChange={handleCellValueChange}
+            onCellHintToggle={handleCellHintToggle}
+          />
         </div>
       )}
+      <Dialog 
+        open={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <GameSettings 
+          settings={settings} 
+          onSettingChange={handleSettingChange} 
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      </Dialog>
     </div>
   )
 }

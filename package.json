@@ -1,6 +1,6 @@
 {
   "name": "sudoku",
-  "version": "0.1.5",
+  "version": "0.1.15",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,9 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
-    "@mui/material": "^6.1.6",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.3.1",
+    "@mui/material": "^6.3.1",
     "axios": "^1.7.9",
     "next": "^15.1.4",
     "react": "^17.0.0 || ^18.0.0",

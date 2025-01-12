@@ -1,0 +1,45 @@
+.settingsContainer {
+  font-family: var(--font-geist-sans);
+}
+
+.settingsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.settingsTitle {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
+  color: #666;
+}
+
+.settingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settingItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.settingItem input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+} 

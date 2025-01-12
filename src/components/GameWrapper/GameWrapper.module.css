@@ -1,0 +1,66 @@
+.gameWrapper {
+  width: 287px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gameHeader {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.title {
+  flex-grow: 1;
+  text-align: left;
+}
+
+/* Override MUI button styles */
+.settingsButton {
+  padding: 4px !important;
+  min-width: 0 !important;
+  margin-left: 8px !important;
+}
+
+.settingsButton svg {
+  font-size: 20px;
+}
+
+/* Add modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  max-width: 90%;
+  width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Add styles for the game board container */
+.gameBoard {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} 
