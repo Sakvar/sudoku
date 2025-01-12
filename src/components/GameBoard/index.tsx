@@ -105,9 +105,20 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     
     const row = Math.floor(index / 9);
     const col = index % 9;
+    const boxStartRow = Math.floor(row / 3) * 3;
+    const boxStartCol = Math.floor(col / 3) * 3;
     
     const cellHighlights = new Set<number>();
     const hintHighlights = new Set<number>();
+
+    // Highlight current 3x3 quadrant
+    if (settings.highlightCurrentQuadrant) {
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          cellHighlights.add((boxStartRow + i) * 9 + (boxStartCol + j));
+        }
+      }
+    }
 
     // Row and column highlights for clicked cell
     if (settings.highlightRowAndColumn) {
@@ -164,7 +175,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
       }
     } 
     
-    // Hint highlights (when clicking on a cell with hints)
+    // Hint highlights
     else if (settings.highlightSameHints) {
       const selectedCellHints = cells[index].draftValues;
       const clickedHintIndex = selectedCellHints.findIndex(isSet => isSet);

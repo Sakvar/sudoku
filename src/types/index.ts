@@ -7,4 +7,5 @@ export interface GameSettingsType {
     highlightCrossForHints: boolean;
     hideImpossibleValuesInSelector: boolean;
     hideImpossibleValuesInHints: boolean;
+    highlightCurrentQuadrant: boolean;
   }

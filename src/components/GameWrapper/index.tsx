@@ -34,27 +34,25 @@ export default function GameWrapper() {
   const [time, setTime] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState<GameSettingsType>(() => {
-    // Try to load settings from localStorage
-    const savedSettings = localStorage.getItem('sudokuGameSettings');
-    if (savedSettings) {
-      try {
-        return JSON.parse(savedSettings);
-      } catch (error) {
-        console.error('Failed to parse saved settings:', error);
-      }
-    }
-    
-    // Default settings
-    return {
+  const [settings, setSettings] = React.useState<GameSettingsType>(() => {
+    const defaultSettings = {
       highlightRowAndColumn: true,
       highlightSameNumbers: true,
       highlightSameHints: true,
       highlightCrossForNumbers: true,
-      highlightCrossForHints: true,
+      highlightCrossForHints: false,
       hideImpossibleValuesInSelector: true,
       hideImpossibleValuesInHints: true,
+      highlightCurrentQuadrant: true,
     };
+    
+    const savedSettings = localStorage.getItem('sudokuGameSettings');
+    if (savedSettings) {
+      // Merge saved settings with defaults to ensure new settings are included
+      return { ...defaultSettings, ...JSON.parse(savedSettings) };
+    }
+    
+    return defaultSettings;
   });
 
   const handleSettingChange = (setting: keyof GameSettingsType) => {
