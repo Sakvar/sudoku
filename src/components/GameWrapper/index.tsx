@@ -34,21 +34,36 @@ export default function GameWrapper() {
   const [time, setTime] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState<GameSettingsType>({
-    highlightRowAndColumn: false,
-    highlightSameNumbers: true,
-    highlightSameHints: true,
-    highlightCrossForNumbers: false,
-    highlightCrossForHints: false,
-    hideImpossibleValuesInSelector: true,
-    hideImpossibleValuesInHints: false,
+  const [settings, setSettings] = useState<GameSettingsType>(() => {
+    // Try to load settings from localStorage
+    const savedSettings = localStorage.getItem('sudokuGameSettings');
+    if (savedSettings) {
+      try {
+        return JSON.parse(savedSettings);
+      } catch (error) {
+        console.error('Failed to parse saved settings:', error);
+      }
+    }
+    
+    // Default settings
+    return {
+      highlightRowAndColumn: true,
+      highlightSameNumbers: true,
+      highlightSameHints: true,
+      highlightCrossForNumbers: true,
+      highlightCrossForHints: true,
+      hideImpossibleValuesInSelector: true,
+      hideImpossibleValuesInHints: true,
+    };
   });
 
-  const handleSettingChange = (key: keyof GameSettingsType, value: boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  const handleSettingChange = (setting: keyof GameSettingsType) => {
+    const newSettings = {
+      ...settings,
+      [setting]: !settings[setting]
+    };
+    setSettings(newSettings);
+    localStorage.setItem('sudokuGameSettings', JSON.stringify(newSettings));
   };
 
   React.useEffect(() => {
@@ -371,6 +386,7 @@ export default function GameWrapper() {
                 cells={gameBoardState?.cells || null}
                 onCellValueChange={handleCellValueChange}
                 onCellHintToggle={handleCellHintToggle}
+                settings={settings}
               />
             </div>
           )}
@@ -382,10 +398,11 @@ export default function GameWrapper() {
         maxWidth="sm"
         fullWidth
       >
-        <GameSettings 
-          settings={settings} 
-          onSettingChange={handleSettingChange} 
+        <GameSettings
+          settings={settings}
+          onSettingChange={handleSettingChange}
           onClose={() => setIsSettingsOpen(false)}
+          open={isSettingsOpen}
         />
       </Dialog>
     </div>

@@ -1,30 +1,38 @@
 import { GameSettingsType } from '@/types';
-import { 
-  DialogTitle, 
-  DialogContent, 
-  IconButton, 
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
   FormGroup,
   FormControlLabel,
   Checkbox,
-  styled
+  IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface GameSettingsProps {
   settings: GameSettingsType;
-  onSettingChange: (key: keyof GameSettingsType, value: boolean) => void;
+  onSettingChange: (setting: keyof GameSettingsType) => void;
   onClose: () => void;
+  open: boolean;
 }
 
-const StyledDialogContent = styled(DialogContent)({
-  paddingTop: '8px !important',
-});
-
-const GameSettings: React.FC<GameSettingsProps> = ({ settings, onSettingChange, onClose }) => {
+export default function GameSettings({ settings, onSettingChange, onClose, open }: GameSettingsProps) {
   return (
-    <>
-      <DialogTitle sx={{ m: 0, p: 2 }}>
-        Game Settings
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ 
+        m: 0, 
+        p: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        Settings
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -38,75 +46,29 @@ const GameSettings: React.FC<GameSettingsProps> = ({ settings, onSettingChange, 
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <StyledDialogContent>
+      <DialogContent dividers>
         <FormGroup>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.highlightRowAndColumn}
-                onChange={(e) => onSettingChange('highlightRowAndColumn', e.target.checked)}
-              />
-            }
-            label="Highlight row and column for selected cell"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.highlightSameNumbers}
-                onChange={(e) => onSettingChange('highlightSameNumbers', e.target.checked)}
-              />
-            }
-            label="Highlight same numbers as selected"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.highlightSameHints}
-                onChange={(e) => onSettingChange('highlightSameHints', e.target.checked)}
-              />
-            }
-            label="Highlight hints same as selected number"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.highlightCrossForNumbers}
-                onChange={(e) => onSettingChange('highlightCrossForNumbers', e.target.checked)}
-              />
-            }
-            label="Highlight cross for same numbers"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.highlightCrossForHints}
-                onChange={(e) => onSettingChange('highlightCrossForHints', e.target.checked)}
-              />
-            }
-            label="Highlight cross for same hints"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.hideImpossibleValuesInSelector}
-                onChange={(e) => onSettingChange('hideImpossibleValuesInSelector', e.target.checked)}
-              />
-            }
-            label="Hide impossible values in number selector"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={settings.hideImpossibleValuesInHints}
-                onChange={(e) => onSettingChange('hideImpossibleValuesInHints', e.target.checked)}
-              />
-            }
-            label="Hide impossible values in hints"
-          />
+          {Object.entries(settings).map(([key, value]) => (
+            <FormControlLabel
+              key={key}
+              control={
+                <Checkbox
+                  checked={value}
+                  onChange={() => onSettingChange(key as keyof GameSettingsType)}
+                />
+              }
+              label={formatSettingLabel(key)}
+            />
+          ))}
         </FormGroup>
-      </StyledDialogContent>
-    </>
+      </DialogContent>
+    </Dialog>
   );
-};
+}
 
-export default GameSettings; 
+function formatSettingLabel(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .replace(/([A-Z])\s/g, (match) => match.toLowerCase());
+} 

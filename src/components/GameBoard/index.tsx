@@ -2,11 +2,13 @@ import { Cells, Cell, Digits } from '@/SudokuGame';
 import { Box, Paper, styled } from '@mui/material';
 import CellPopup from '../CellPopup';
 import React from 'react';
+import { GameSettingsType } from '@/types';
 
 interface GameBoardProps {
   cells: Cells | null;
   onCellValueChange: (index: number, value: Digits) => void;
   onCellHintToggle: (index: number, hint: number) => void;
+  settings: GameSettingsType;
 }
 
 const Item = styled(Paper)({
@@ -161,7 +163,7 @@ const calculateHighlights = (cells: Cells | null, index: number, value: Digits) 
   return newHighlights;
 };
 
-export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }: GameBoardProps) {
+export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, settings }: GameBoardProps) {
   const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
   const [highlightedHints, setHighlightedHints] = React.useState<Set<number>>(new Set());
   const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
@@ -186,14 +188,17 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
     const newHighlights = new Set<number>();
     const newHintHighlights = new Set<number>();
 
-    // Highlight row and column
-    for (let i = 0; i < 9; i++) {
-      newHighlights.add(row * 9 + i);
-      newHighlights.add(i * 9 + col);
+    // Apply highlighting based on settings
+    if (settings.highlightRowAndColumn) {
+      // Highlight row and column
+      for (let i = 0; i < 9; i++) {
+        newHighlights.add(row * 9 + i);
+        newHighlights.add(i * 9 + col);
+      }
     }
 
-    // Highlight matching values and track hint matches
-    if (value !== 0) {
+    // Highlight matching values if enabled
+    if (value !== 0 && settings.highlightSameNumbers) {
       newHintHighlights.add(value);
       
       for (let i = 0; i < 81; i++) {
