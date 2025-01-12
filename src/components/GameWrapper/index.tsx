@@ -277,7 +277,12 @@ export default function GameWrapper() {
     <div className={styles.gameWrapper}>
       <div className={styles.gameHeader}>
         <div className={styles.title}>
-          Game - {difficultyState} - Time: {formatTime(time)}
+          <span className={styles.difficulty}>
+            Game - {difficultyState}
+          </span>
+          <span className={styles.timer}>
+            {" - Time: "}{formatTime(time)}
+          </span>
         </div>
         <Button 
           className={styles.settingsButton}
