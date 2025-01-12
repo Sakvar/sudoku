@@ -50,11 +50,20 @@ const HintsContainer = styled('div')({
   gridTemplateColumns: 'repeat(3, 1fr)',
   gridTemplateRows: 'repeat(3, 1fr)',
   position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  fontSize: '0.7rem',
+  top: 1,
+  left: 1,
+  right: 1,
+  bottom: 1,
+  fontSize: '0.5rem',
+  gap: 0,
+  lineHeight: '1',
+  '& > span': {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#666',
+    padding: 0,
+  }
 });
 
 const HintCell = styled('div')({
