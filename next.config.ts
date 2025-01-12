@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   // Configure the base path for GitHub Pages
   basePath: isGithubActions ? `/${repo}` : '',
   assetPrefix: isGithubActions ? `/${repo}` : '/',
+  // Remove headers configuration since it's not compatible with export
 };
 
 export default nextConfig;

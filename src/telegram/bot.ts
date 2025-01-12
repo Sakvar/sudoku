@@ -1,4 +1,5 @@
 import { Telegraf } from 'telegraf';
+import { version } from '../../package.json';
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) {
@@ -6,7 +7,7 @@ if (!token) {
 }
 
 const bot = new Telegraf(token);
-const WEBAPP_URL = 'https://Sakvar.github.io/sudoku/';
+const WEBAPP_URL = `https://Sakvar.github.io/sudoku/?v=${version}`;
 
 bot.start((ctx) => {
   ctx.reply('Welcome to Sudoku!', {

@@ -37,12 +37,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AppWrapper className={`${geistSans.variable} ${geistMono.variable}`}>
-      <Script 
-        src="https://telegram.org/js/telegram-web-app.js"
-        strategy="beforeInteractive"
-      />
-      {children}
-    </AppWrapper>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
+        {process.env.NEXT_PUBLIC_TELEGRAM_WEBAPP === 'true' && (
+          <Script 
+            src="https://telegram.org/js/telegram-web-app.js"
+            strategy="beforeInteractive"
+          />
+        )}
+      </head>
+      <body className="antialiased">
+        <AppWrapper className={`${geistSans.variable} ${geistMono.variable}`}>
+          {children}
+        </AppWrapper>
+      </body>
+    </html>
   );
 }
