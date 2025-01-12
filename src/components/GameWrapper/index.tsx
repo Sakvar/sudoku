@@ -89,10 +89,16 @@ export default function GameWrapper() {
         if (parsed.boardState) {
           const restoredCells = parsed.boardState.cells.map(cell => {
             const newCell = new Cell({
-              initialValue: cell.value as Digits,
+              initialValue: cell.isInitial ? cell.value as Digits : 0,
               solutionValue: cell.value as Digits
             });
-            newCell.setUserValue(cell.userValue as Digits);
+            
+            // If it's a user-entered value, set it via setUserValue
+            if (!cell.isInitial && cell.value) {
+              newCell.setUserValue(cell.value as Digits);
+            }
+            
+            // Restore hints
             cell.hints.forEach((isSet, index) => {
               if (isSet) newCell.toggleHint(index + 1);
             });
