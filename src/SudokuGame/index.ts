@@ -69,6 +69,14 @@ export class Board {
   private resetBoard() {
     
   } 
+  
+  clone(): Board {
+    const newBoard = new Board(this.difficulty);
+    // Skip initialization since we're copying an existing board
+    newBoard.initialized = Promise.resolve();
+    newBoard.cells = [...this.cells] as Cells;
+    return newBoard;
+  }
 }
 
 export class Cell {
@@ -123,7 +131,7 @@ export class Cell {
 
 export type Digits = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-export type Cells = Cell[] & { length: 81 };
+export type Cells = [Cell, ...Cell[]] & { length: 81 };
 
 export type GlobalGameState = 'playing' | 'won' | 'lost' | 'selectDifficulty' | 'error' | 'notStarted';
 

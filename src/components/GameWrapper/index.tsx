@@ -1,7 +1,7 @@
 "use client"
 import Button from '@mui/material/Button';
 import React from 'react';
-import { GlobalGameState, SudokuGuruDifficulty, Board, Digits, Cells } from '@/SudokuGame';
+import { GlobalGameState, SudokuGuruDifficulty, Board, Digits } from '@/SudokuGame';
 import { Stack } from '@mui/system';
 import GameBoard from '../GameBoard';
 
@@ -40,18 +40,14 @@ export default function GameWrapper() {
   const handleCellValueChange = (index: number, value: Digits) => {
     if (gameBoardState) {
       gameBoardState.cells[index].setUserValue(value);
-      const newBoard = new Board(gameBoardState.difficulty);
-      newBoard.cells = gameBoardState.cells.slice() as Cells;
-      setGameBoardState(newBoard);
+      setGameBoardState(gameBoardState.clone());
     }
   };
 
   const handleCellHintToggle = (index: number, hint: number) => {
     if (gameBoardState) {
       gameBoardState.cells[index].toggleHint(hint);
-      const newBoard = new Board(gameBoardState.difficulty);
-      newBoard.cells = gameBoardState.cells.slice() as Cells;
-      setGameBoardState(newBoard);
+      setGameBoardState(gameBoardState.clone());
     }
   };
 
