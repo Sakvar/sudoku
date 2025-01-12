@@ -66,33 +66,44 @@ const HintsContainer = styled('div')({
   }
 });
 
-const HintCell = styled('div')({
+const HintCell = styled('div')<{ $isHighlighted?: boolean }>(({ $isHighlighted }) => ({
+  fontSize: '0.8em',
+  color: $isHighlighted ? '#fff' : 'inherit',
+  fontWeight: $isHighlighted ? '700' : 'normal',
+  backgroundColor: $isHighlighted ? '#2196f3' : 'transparent',
+  borderRadius: '4px',
+  padding: '1px 3px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-});
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: $isHighlighted ? '#1976d2' : 'transparent',
+  }
+}));
 
 interface CellContentProps {
   cell: Cell;
+  highlightedHints?: Set<number>;
 }
 
-const CellContent = ({ cell }: CellContentProps) => {
-  // If it's an initial value, show it bold
+const CellContent = ({ cell, highlightedHints }: CellContentProps) => {
   if (cell.getInitialValue !== 0) {
     return <InitialValue>{cell.getInitialValue}</InitialValue>;
   }
 
-  // If user entered a main value, show it (not bold)
   if (cell.getUserValue !== 0) {
     return <UserValue>{cell.getUserValue}</UserValue>;
   }
 
-  // If there are hints, show the hints grid
   if (cell.draftValues.some(v => v)) {
     return (
       <HintsContainer>
         {cell.draftValues.map((isSet, index) => (
-          <HintCell key={index}>
+          <HintCell 
+            key={index}
+            $isHighlighted={isSet && highlightedHints?.has(index + 1)}
+          >
             {isSet ? index + 1 : ''}
           </HintCell>
         ))}
@@ -152,6 +163,7 @@ const calculateHighlights = (cells: Cells | null, index: number, value: Digits) 
 
 export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }: GameBoardProps) {
   const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
+  const [highlightedHints, setHighlightedHints] = React.useState<Set<number>>(new Set());
   const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
   const [isPencilMode, setIsPencilMode] = React.useState(false);
   const [clickedCell, setClickedCell] = React.useState<number | null>(null);
@@ -159,7 +171,6 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
   const handleCellClick = (index: number) => {
     if (!cells) return;
 
-    // Show popup when clicking the previously clicked cell
     if (index === clickedCell) {
       if (cells[index].isChangeable) {
         setSelectedForEdit(index);
@@ -167,33 +178,34 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
       return;
     }
 
-    // First click or clicking a different cell - highlight cells
     const row = Math.floor(index / 9);
     const col = index % 9;
-    const value = cells[index].value;
+    const selectedCell = cells[index];
+    const value = selectedCell.value;
 
     const newHighlights = new Set<number>();
+    const newHintHighlights = new Set<number>();
 
-    // Highlight row
+    // Highlight row and column
     for (let i = 0; i < 9; i++) {
       newHighlights.add(row * 9 + i);
-    }
-
-    // Highlight column
-    for (let i = 0; i < 9; i++) {
       newHighlights.add(i * 9 + col);
     }
 
-    // Highlight same values if cell is not empty
+    // Highlight matching values and track hint matches
     if (value !== 0) {
+      newHintHighlights.add(value);
+      
       for (let i = 0; i < 81; i++) {
-        if (cells[i].value === value) {
+        const currentCell = cells[i];
+        if (currentCell.value === value) {
           newHighlights.add(i);
         }
       }
     }
 
     setHighlightedCells(newHighlights);
+    setHighlightedHints(newHintHighlights);
     setClickedCell(index);
     setSelectedForEdit(null);
   };
@@ -215,7 +227,10 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle }
             `}
             onClick={() => handleCellClick(index)}
           >
-            {cells && <CellContent cell={cells[index]} />}
+            {cells && <CellContent 
+              cell={cells[index]}
+              highlightedHints={highlightedHints}
+            />}
           </Item>
         ))}
       </BoardGrid>
