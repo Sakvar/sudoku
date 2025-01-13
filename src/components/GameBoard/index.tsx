@@ -18,11 +18,11 @@ interface CellContentProps {
 }
 
 export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, settings }: GameBoardProps) {
+  const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
+  const [clickedCell, setClickedCell] = React.useState<number | null>(null);
   const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
   const [highlightedHints, setHighlightedHints] = React.useState<Set<number>>(new Set());
-  const [selectedForEdit, setSelectedForEdit] = React.useState<number | null>(null);
   const [isPencilMode, setIsPencilMode] = React.useState(false);
-  const [clickedCell, setClickedCell] = React.useState<number | null>(null);
 
   const calculateHighlights = React.useCallback((cells: Cells | null, index: number, value: Digits, settings: GameSettingsType) => {
     if (!cells) return {
@@ -149,19 +149,23 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     }
   }, [cells, clickedCell, settings, calculateHighlights]);
 
-  const handleCellClick = React.useCallback((index: number) => {
-    if (!cells) return;
-
-    if (index === clickedCell) {
-      if (cells[index].isChangeable) {
-        setSelectedForEdit(index);
-      }
-      return;
+  const handleCellClick = (index: number) => {
+    if (cells) {
+      const cell = cells[index];
+      setClickedCell(index);
+      
+      // Calculate highlights for the clicked cell
+      const { cellHighlights, hintHighlights } = calculateHighlights(cells, index, cell.value, settings);
+      setHighlightedCells(cellHighlights);
+      setHighlightedHints(hintHighlights);
     }
+  };
 
-    setClickedCell(index);
-    setSelectedForEdit(null);
-  }, [cells, clickedCell]);
+  const handleCellDoubleClick = (index: number) => {
+    if (cells && cells[index].isChangeable) {
+      setSelectedForEdit(index);
+    }
+  };
 
   const findObviousCells = React.useCallback((cells: Cells): Set<number> => {
     console.log('Finding obvious cells...');
@@ -211,11 +215,70 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     return obviousCells;
   }, []);
 
-  // Force recalculation when cells change
+  const findObviousCellsForNumber = React.useCallback((cells: Cells, number: Digits): Set<number> => {
+    const obviousCells = new Set<number>();
+    
+    for (let i = 0; i < 81; i++) {
+      if (cells[i].value !== 0) continue;
+      
+      const row = Math.floor(i / 9);
+      const col = i % 9;
+      const boxStartRow = Math.floor(row / 3) * 3;
+      const boxStartCol = Math.floor(col / 3) * 3;
+      
+      const possibleValues = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      
+      // Remove values from row
+      for (let c = 0; c < 9; c++) {
+        const value = cells[row * 9 + c].value;
+        if (value !== 0) possibleValues.delete(value);
+      }
+      
+      // Remove values from column
+      for (let r = 0; r < 9; r++) {
+        const value = cells[r * 9 + col].value;
+        if (value !== 0) possibleValues.delete(value);
+      }
+      
+      // Remove values from 3x3 box
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const value = cells[(boxStartRow + r) * 9 + boxStartCol + c].value;
+          if (value !== 0) possibleValues.delete(value);
+        }
+      }
+      
+      // If only this number is possible, it's an obvious cell
+      if (possibleValues.size === 1 && possibleValues.has(number)) {
+        obviousCells.add(i);
+      }
+    }
+    
+    return obviousCells;
+  }, []);
+
   const obviousCells = React.useMemo(() => {
-    if (!cells || !settings.highlightAllObviousCells) return new Set<number>();
-    return findObviousCells(cells);
-  }, [cells, settings.highlightAllObviousCells, findObviousCells]);
+    console.log('Calculating obvious cells');
+    if (!cells) return new Set<number>();
+    
+    if (settings.highlightAllObviousCells) {
+      return findObviousCells(cells);
+    }
+    
+    if (settings.highlightObviousCellsForCurrentNumber && clickedCell !== null) {
+      const clickedValue = cells[clickedCell].value;
+      console.log('Clicked cell index:', clickedCell);
+      console.log('Clicked cell value:', clickedValue);
+      
+      if (clickedValue !== 0) {
+        const obvious = findObviousCellsForNumber(cells, clickedValue);
+        console.log('Found obvious cells for', clickedValue, ':', Array.from(obvious));
+        return obvious;
+      }
+    }
+    
+    return new Set<number>();
+  }, [cells, settings.highlightAllObviousCells, settings.highlightObviousCellsForCurrentNumber, clickedCell, findObviousCells, findObviousCellsForNumber]);
 
   // Add obvious class to cell className
   const getCellClassName = (index: number, isHighlighted: boolean) => {
@@ -230,6 +293,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
             key={index} 
             className={getCellClassName(index, highlightedCells.has(index))}
             onClick={() => handleCellClick(index)}
+            onDoubleClick={() => handleCellDoubleClick(index)}
           >
             {cells && <CellContent 
               cell={cells[index]}

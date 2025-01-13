@@ -46,6 +46,7 @@ export default function GameWrapper() {
       highlightCurrentQuadrant: true,
       highlightQuadrantsWithSameNumber: true,
       highlightAllObviousCells: true,
+      highlightObviousCellsForCurrentNumber: true,
     };
     
     const savedSettings = localStorage.getItem('sudokuGameSettings');

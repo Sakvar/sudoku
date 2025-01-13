@@ -10,4 +10,5 @@ export interface GameSettingsType {
     highlightCurrentQuadrant: boolean;
     highlightQuadrantsWithSameNumber: boolean;
     highlightAllObviousCells: boolean;
+    highlightObviousCellsForCurrentNumber: boolean;
 }
