@@ -45,25 +45,15 @@ export default function GameWrapper() {
       hideImpossibleValuesInHints: true,
       highlightCurrentQuadrant: true,
       highlightQuadrantsWithSameNumber: true,
-      highlightAllObviousCells: true,
-      highlightObviousCellsForCurrentNumber: true,
+      highlightAllObviousCells: false,
+      highlightObviousCellsForCurrentNumber: false,
       autofillObviousNumbers: false,
+      highlightLessObviousCells: false,
     };
     
     const savedSettings = localStorage.getItem('sudokuGameSettings');
     if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      
-      // Migrate old settings
-      if ('highlightObviousCell' in parsedSettings) {
-        parsedSettings.highlightAllObviousCells = parsedSettings.highlightObviousCell;
-        delete parsedSettings.highlightObviousCell;
-        
-        // Save migrated settings back to localStorage
-        localStorage.setItem('sudokuGameSettings', JSON.stringify(parsedSettings));
-      }
-      
-      return { ...defaultSettings, ...parsedSettings };
+      return { ...defaultSettings, ...JSON.parse(savedSettings) };
     }
     
     return defaultSettings;

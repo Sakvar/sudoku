@@ -338,8 +338,169 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     return obviousCells;
   }, []);
 
+  const findLessObviousCells = React.useCallback((cells: Cells): Set<number> => {
+    const lessObviousCells = new Set<number>();
+    // First get the simple obvious cells to exclude them
+    const simpleObviousCells = findObviousCells(cells);
+    
+    // Check each 3x3 box
+    for (let boxRow = 0; boxRow < 3; boxRow++) {
+      for (let boxCol = 0; boxCol < 3; boxCol++) {
+        const boxStartRow = boxRow * 3;
+        const boxStartCol = boxCol * 3;
+        
+        // For each digit 1-9
+        for (let digit = 1; digit <= 9; digit++) {
+          console.log(`\nAnalyzing box (${boxRow},${boxCol}) for digit ${digit}`);
+          
+          // Skip if digit already exists in this box
+          let exists = false;
+          for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+              if (cells[(boxStartRow + r) * 9 + boxStartCol + c].value === digit) {
+                exists = true;
+                break;
+              }
+            }
+            if (exists) break;
+          }
+          if (exists) {
+            console.log(`Digit ${digit} already exists in this box`);
+            continue;
+          }
+
+          // Find available rows and columns in this box
+          const availableRows = new Set<number>();
+          const availableCols = new Set<number>();
+          const possiblePositions = new Set<number>();
+          
+          // First, find which rows and columns are not completely filled
+          for (let r = 0; r < 3; r++) {
+            let rowFull = true;
+            for (let c = 0; c < 3; c++) {
+              if (cells[(boxStartRow + r) * 9 + boxStartCol + c].value === 0) {
+                rowFull = false;
+              }
+            }
+            if (!rowFull) availableRows.add(r);
+          }
+          
+          for (let c = 0; c < 3; c++) {
+            let colFull = true;
+            for (let r = 0; r < 3; r++) {
+              if (cells[(boxStartRow + r) * 9 + boxStartCol + c].value === 0) {
+                colFull = false;
+              }
+            }
+            if (!colFull) availableCols.add(c);
+          }
+          
+          console.log(`Available rows: ${Array.from(availableRows)}`);
+          console.log(`Available cols: ${Array.from(availableCols)}`);
+
+          // Find possible positions considering row/column constraints
+          for (const r of availableRows) {
+            for (const c of availableCols) {
+              const cellIndex = (boxStartRow + r) * 9 + boxStartCol + c;
+              if (cells[cellIndex].value === 0) {
+                let possible = true;
+                // Check row and column
+                for (let i = 0; i < 9; i++) {
+                  if (cells[(boxStartRow + r) * 9 + i].value === digit ||
+                      cells[i * 9 + (boxStartCol + c)].value === digit) {
+                    possible = false;
+                    break;
+                  }
+                }
+                if (possible) {
+                  possiblePositions.add(cellIndex);
+                }
+              }
+            }
+          }
+          
+          console.log(`Initial possible positions: ${Array.from(possiblePositions)}`);
+
+          // Check constraints from adjacent boxes in same row
+          if (possiblePositions.size > 1) {
+            const rowConstraints = new Set<number>();
+            
+            // Check where the digit can go in adjacent boxes
+            for (let c = 0; c < 3; c++) {
+              if (c === boxCol) continue;
+              const adjacentBoxCol = c * 3;
+              
+              // Find where digit must go in adjacent box
+              const mustUseRows = new Set<number>();
+              for (let r = 0; r < 3; r++) {
+                let rowPossible = false;
+                let rowEmpty = false;
+                for (let cc = 0; cc < 3; cc++) {
+                  const cellIndex = (boxStartRow + r) * 9 + adjacentBoxCol + cc;
+                  if (cells[cellIndex].value === 0) {
+                    rowEmpty = true;
+                    let possible = true;
+                    for (let i = 0; i < 9; i++) {
+                      if (cells[(boxStartRow + r) * 9 + i].value === digit ||
+                          cells[i * 9 + (adjacentBoxCol + cc)].value === digit) {
+                        possible = false;
+                        break;
+                      }
+                    }
+                    if (possible) {
+                      rowPossible = true;
+                    }
+                  }
+                }
+                if (rowEmpty && !rowPossible) {
+                  rowConstraints.add(r);
+                }
+              }
+            }
+            
+            console.log(`Row constraints: ${Array.from(rowConstraints)}`);
+
+            // Apply constraints
+            if (rowConstraints.size > 0) {
+              const newPossible = new Set<number>();
+              for (const cellIndex of possiblePositions) {
+                const row = Math.floor(cellIndex / 9) - boxStartRow;
+                if (!rowConstraints.has(row)) {
+                  newPossible.add(cellIndex);
+                }
+              }
+              possiblePositions.clear();
+              newPossible.forEach(pos => possiblePositions.add(pos));
+            }
+            
+            console.log(`Positions after constraints: ${Array.from(possiblePositions)}`);
+          }
+
+          // If we're down to one position, check it's not already an obvious cell
+          if (possiblePositions.size === 1) {
+            const [cellIndex] = possiblePositions;
+            if (!simpleObviousCells.has(cellIndex)) {
+              console.log(`Found less obvious cell: ${cellIndex} for digit ${digit}`);
+              lessObviousCells.add(cellIndex);
+            } else {
+              console.log(`Cell ${cellIndex} is already an obvious cell, skipping`);
+            }
+          }
+        }
+      }
+    }
+    
+    return lessObviousCells;
+  }, [findObviousCells]);
+
+  // Separate memo for less obvious cells
+  const lessObviousCells = React.useMemo(() => {
+    if (!cells || !settings.highlightLessObviousCells) return new Set<number>();
+    return findLessObviousCells(cells);
+  }, [cells, settings.highlightLessObviousCells, findLessObviousCells]);
+
+  // Update the obviousCells memo to be used by findLessObviousCells
   const obviousCells = React.useMemo(() => {
-    console.log('Calculating obvious cells');
     if (!cells) return new Set<number>();
     
     if (settings.highlightAllObviousCells) {
@@ -348,13 +509,8 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     
     if (settings.highlightObviousCellsForCurrentNumber && selectedForEdit !== null) {
       const clickedNumber = cells[selectedForEdit].value;
-      console.log('Clicked cell:', selectedForEdit);
-      console.log('Clicked number:', clickedNumber);
-      
       if (clickedNumber !== 0) {
-        const obvious = findObviousCellsForNumber(cells, clickedNumber);
-        console.log('Found obvious cells for', clickedNumber, ':', Array.from(obvious));
-        return obvious;
+        return findObviousCellsForNumber(cells, clickedNumber);
       }
     }
     
@@ -368,9 +524,34 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     findObviousCellsForNumber
   ]);
 
-  // Add obvious class to cell className
-  const getCellClassName = (index: number, isHighlighted: boolean) => {
-    return `${styles.cell} ${isHighlighted ? styles.highlighted : ''} ${obviousCells.has(index) ? styles.obvious : ''}`;
+  // Update the cell rendering to handle both types of obvious cells
+  const getCellClassName = (index: number) => {
+    const classNames = [styles.cell];
+    
+    if (selectedForEdit === index) {
+      classNames.push(styles.selected);
+    }
+    
+    if (settings.highlightRowAndColumn && selectedForEdit !== null) {
+      const selectedRow = Math.floor(selectedForEdit / 9);
+      const selectedCol = selectedForEdit % 9;
+      const currentRow = Math.floor(index / 9);
+      const currentCol = index % 9;
+      
+      if (currentRow === selectedRow || currentCol === selectedCol) {
+        classNames.push(styles.highlighted);
+      }
+    }
+    
+    if (obviousCells.has(index)) {
+      classNames.push(styles.obvious);
+    }
+    
+    if (lessObviousCells.has(index)) {
+      classNames.push(styles['less-obvious']);
+    }
+    
+    return classNames.join(' ');
   };
 
   return (
@@ -379,7 +560,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
         {Array.from({ length: 81 }).map((_, index) => (
           <div 
             key={index} 
-            className={getCellClassName(index, highlightedCells.has(index))}
+            className={getCellClassName(index)}
             onClick={() => handleCellClick(index)}
             onDoubleClick={() => handleCellDoubleClick(index)}
           >

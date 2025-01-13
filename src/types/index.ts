@@ -12,4 +12,5 @@ export interface GameSettingsType {
     highlightAllObviousCells: boolean;
     highlightObviousCellsForCurrentNumber: boolean;
     autofillObviousNumbers: boolean;
+    highlightLessObviousCells: boolean;
 }
