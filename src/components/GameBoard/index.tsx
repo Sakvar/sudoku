@@ -171,53 +171,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     console.log('Finding obvious cells...');
     const obviousCells = new Set<number>();
     
-    if (!cells) return obviousCells;
-    
-    for (let i = 0; i < 81; i++) {
-      if (cells[i].value !== 0) {
-        console.log(`Cell ${i} has value ${cells[i].value}`);
-        continue;
-      }
-      
-      const row = Math.floor(i / 9);
-      const col = i % 9;
-      const boxStartRow = Math.floor(row / 3) * 3;
-      const boxStartCol = Math.floor(col / 3) * 3;
-      
-      const possibleValues = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-      
-      // Remove values from row
-      for (let c = 0; c < 9; c++) {
-        const value = cells[row * 9 + c].value;
-        if (value !== 0) possibleValues.delete(value);
-      }
-      
-      // Remove values from column
-      for (let r = 0; r < 9; r++) {
-        const value = cells[r * 9 + col].value;
-        if (value !== 0) possibleValues.delete(value);
-      }
-      
-      // Remove values from 3x3 box
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          const value = cells[(boxStartRow + r) * 9 + boxStartCol + c].value;
-          if (value !== 0) possibleValues.delete(value);
-        }
-      }
-      
-      if (possibleValues.size === 1) {
-        obviousCells.add(i);
-      }
-    }
-    
-    console.log('Obvious cells:', Array.from(obviousCells));
-    return obviousCells;
-  }, []);
-
-  const findObviousCellsForNumber = React.useCallback((cells: Cells, number: Digits): Set<number> => {
-    const obviousCells = new Set<number>();
-    
+    // First pass: Check each empty cell for single possible value
     for (let i = 0; i < 81; i++) {
       if (cells[i].value !== 0) continue;
       
@@ -228,29 +182,156 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
       
       const possibleValues = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
       
-      // Remove values from row
-      for (let c = 0; c < 9; c++) {
-        const value = cells[row * 9 + c].value;
-        if (value !== 0) possibleValues.delete(value);
+      // Remove values from row, column, and box
+      for (let j = 0; j < 9; j++) {
+        possibleValues.delete(cells[row * 9 + j].value); // row
+        possibleValues.delete(cells[j * 9 + col].value); // column
       }
       
-      // Remove values from column
-      for (let r = 0; r < 9; r++) {
-        const value = cells[r * 9 + col].value;
-        if (value !== 0) possibleValues.delete(value);
-      }
-      
-      // Remove values from 3x3 box
       for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
-          const value = cells[(boxStartRow + r) * 9 + boxStartCol + c].value;
-          if (value !== 0) possibleValues.delete(value);
+          possibleValues.delete(cells[(boxStartRow + r) * 9 + boxStartCol + c].value);
         }
       }
       
-      // If only this number is possible, it's an obvious cell
+      if (possibleValues.size === 1) {
+        obviousCells.add(i);
+      }
+    }
+    
+    // Second pass: Check each box for numbers that can only go in one spot
+    for (let boxRow = 0; boxRow < 3; boxRow++) {
+      for (let boxCol = 0; boxCol < 3; boxCol++) {
+        const boxStartRow = boxRow * 3;
+        const boxStartCol = boxCol * 3;
+        
+        // For each digit 1-9
+        for (let digit = 1; digit <= 9; digit++) {
+          // Skip if this number already exists in the box
+          let exists = false;
+          let possibleSpots = [];
+          
+          // Check each cell in the box
+          for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+              const cellIndex = (boxStartRow + r) * 9 + boxStartCol + c;
+              const cellValue = cells[cellIndex].value;
+              
+              if (cellValue === digit) {
+                exists = true;
+                break;
+              }
+              
+              if (cellValue === 0) {
+                // Check if this digit can go here (not in same row/column)
+                const row = boxStartRow + r;
+                const col = boxStartCol + c;
+                let possible = true;
+                
+                // Check row and column
+                for (let i = 0; i < 9; i++) {
+                  if (cells[row * 9 + i].value === digit || cells[i * 9 + col].value === digit) {
+                    possible = false;
+                    break;
+                  }
+                }
+                
+                if (possible) {
+                  possibleSpots.push(cellIndex);
+                }
+              }
+            }
+            if (exists) break;
+          }
+          
+          // If number isn't in box yet and has only one possible spot
+          if (!exists && possibleSpots.length === 1) {
+            obviousCells.add(possibleSpots[0]);
+          }
+        }
+      }
+    }
+    
+    return obviousCells;
+  }, []);
+
+  const findObviousCellsForNumber = React.useCallback((cells: Cells, number: Digits): Set<number> => {
+    const obviousCells = new Set<number>();
+    
+    // First pass: Check each empty cell
+    for (let i = 0; i < 81; i++) {
+      if (cells[i].value !== 0) continue;
+      
+      const row = Math.floor(i / 9);
+      const col = i % 9;
+      const boxStartRow = Math.floor(row / 3) * 3;
+      const boxStartCol = Math.floor(col / 3) * 3;
+      
+      const possibleValues = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      
+      // Remove values from row, column, and box
+      for (let j = 0; j < 9; j++) {
+        possibleValues.delete(cells[row * 9 + j].value);
+        possibleValues.delete(cells[j * 9 + col].value);
+      }
+      
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          possibleValues.delete(cells[(boxStartRow + r) * 9 + boxStartCol + c].value);
+        }
+      }
+      
       if (possibleValues.size === 1 && possibleValues.has(number)) {
         obviousCells.add(i);
+      }
+    }
+    
+    // Second pass: Check each box for this specific number
+    for (let boxRow = 0; boxRow < 3; boxRow++) {
+      for (let boxCol = 0; boxCol < 3; boxCol++) {
+        const boxStartRow = boxRow * 3;
+        const boxStartCol = boxCol * 3;
+        
+        // Skip if number already exists in this box
+        let exists = false;
+        let possibleSpots = [];
+        
+        // Check each cell in the box
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 3; c++) {
+            const cellIndex = (boxStartRow + r) * 9 + boxStartCol + c;
+            const cellValue = cells[cellIndex].value;
+            
+            if (cellValue === number) {
+              exists = true;
+              break;
+            }
+            
+            if (cellValue === 0) {
+              const row = boxStartRow + r;
+              const col = boxStartCol + c;
+              let possible = true;
+              
+              // Check row and column
+              for (let i = 0; i < 9; i++) {
+                if (cells[row * 9 + i].value === number || cells[i * 9 + col].value === number) {
+                  possible = false;
+                  break;
+                }
+              }
+              
+              if (possible) {
+                possibleSpots.push(cellIndex);
+              }
+            }
+          }
+          if (exists) break;
+        }
+        
+        // If number isn't in box yet and has only one possible spot
+        if (!exists && possibleSpots.length === 1) {
+          obviousCells.add(possibleSpots[0]);
+        }
       }
     }
     
@@ -265,20 +346,27 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
       return findObviousCells(cells);
     }
     
-    if (settings.highlightObviousCellsForCurrentNumber && clickedCell !== null) {
-      const clickedValue = cells[clickedCell].value;
-      console.log('Clicked cell index:', clickedCell);
-      console.log('Clicked cell value:', clickedValue);
+    if (settings.highlightObviousCellsForCurrentNumber && selectedForEdit !== null) {
+      const clickedNumber = cells[selectedForEdit].value;
+      console.log('Clicked cell:', selectedForEdit);
+      console.log('Clicked number:', clickedNumber);
       
-      if (clickedValue !== 0) {
-        const obvious = findObviousCellsForNumber(cells, clickedValue);
-        console.log('Found obvious cells for', clickedValue, ':', Array.from(obvious));
+      if (clickedNumber !== 0) {
+        const obvious = findObviousCellsForNumber(cells, clickedNumber);
+        console.log('Found obvious cells for', clickedNumber, ':', Array.from(obvious));
         return obvious;
       }
     }
     
     return new Set<number>();
-  }, [cells, settings.highlightAllObviousCells, settings.highlightObviousCellsForCurrentNumber, clickedCell, findObviousCells, findObviousCellsForNumber]);
+  }, [
+    cells,
+    settings.highlightAllObviousCells,
+    settings.highlightObviousCellsForCurrentNumber,
+    selectedForEdit,
+    findObviousCells,
+    findObviousCellsForNumber
+  ]);
 
   // Add obvious class to cell className
   const getCellClassName = (index: number, isHighlighted: boolean) => {
