@@ -29,6 +29,12 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Sudoku",
   description: "Sudoku game for Telegram",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1.0,
+    viewportFit: 'cover',
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({
