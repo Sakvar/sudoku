@@ -79,7 +79,7 @@ body {
 .gameBoard {
   width: 100%;
   max-width: 95vw;
-  aspect-ratio: 1;
+  /* aspect-ratio: 1; */
   margin: 8px auto;
 }
 

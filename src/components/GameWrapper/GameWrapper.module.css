@@ -79,7 +79,7 @@
 /* Add styles for the game board container */
 .gameBoard {
   width: 100%;
-  aspect-ratio: 1;
+  /* aspect-ratio: 1; */
   display: flex;
   justify-content: center;
   align-items: center;
