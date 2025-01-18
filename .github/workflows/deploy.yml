@@ -33,9 +33,12 @@ jobs:
           npm install --package-lock-only
         
       - name: Build
-        run: npm run build
         env:
+          GA_MEASUREMENT_ID: G-W5Y2KPXHLG #Replace this with your variable. Could not figure out how to pass it from github actions
           GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "Building with GA ID: $GA_MEASUREMENT_ID"
+          npm run build
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

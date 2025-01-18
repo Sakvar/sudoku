@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Script from "next/script";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import AppWrapper from '@/components/AppWrapper';
 
 const geistSans = localFont({
@@ -29,12 +30,13 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Sudoku",
   description: "Sudoku game for Telegram",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1.0,
-    viewportFit: 'cover',
-    userScalable: false,
-  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+  viewportFit: 'cover',
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -42,13 +44,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  console.log("Process.env: ", JSON.stringify(process.env)); // This logs on the server during build/runtime
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+        <GoogleAnalytics />
         {process.env.NEXT_PUBLIC_TELEGRAM_WEBAPP === 'true' && (
           <Script 
             src="https://telegram.org/js/telegram-web-app.js"

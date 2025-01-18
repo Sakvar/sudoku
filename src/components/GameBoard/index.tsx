@@ -168,14 +168,12 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
   };
 
   const findObviousCells = React.useCallback((cells: Cells): Set<number> => {
-    console.log('Finding obvious cells...');
     const obviousCells = new Set<number>();
     
     if (!cells) return obviousCells;
     
     for (let i = 0; i < 81; i++) {
       if (cells[i].value !== 0) {
-        console.log(`Cell ${i} has value ${cells[i].value}`);
         continue;
       }
       
@@ -211,7 +209,6 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
       }
     }
     
-    console.log('Obvious cells:', Array.from(obviousCells));
     return obviousCells;
   }, []);
 
@@ -258,7 +255,6 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
   }, []);
 
   const obviousCells = React.useMemo(() => {
-    console.log('Calculating obvious cells');
     if (!cells) return new Set<number>();
     
     if (settings.highlightAllObviousCells) {
@@ -267,12 +263,9 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
     
     if (settings.highlightObviousCellsForCurrentNumber && clickedCell !== null) {
       const clickedValue = cells[clickedCell].value;
-      console.log('Clicked cell index:', clickedCell);
-      console.log('Clicked cell value:', clickedValue);
       
       if (clickedValue !== 0) {
         const obvious = findObviousCellsForNumber(cells, clickedValue);
-        console.log('Found obvious cells for', clickedValue, ':', Array.from(obvious));
         return obvious;
       }
     }
