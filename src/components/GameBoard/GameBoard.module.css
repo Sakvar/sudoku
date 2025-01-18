@@ -58,23 +58,11 @@
 }
 
 .cell.obvious {
-  background-color: rgba(144, 238, 144, 0.5) !important; /* Light green */
+  background-color: rgba(255, 255, 0, 0.3) !important;
 }
 
 .cell.obvious:hover {
-  background-color: rgba(144, 238, 144, 0.7) !important; /* Slightly darker green on hover */
-}
-
-.cell.less-obvious {
-  background-color: rgba(255, 215, 0, 0.4) !important; /* Light golden yellow */
-}
-
-.cell.less-obvious:hover {
-  background-color: rgba(255, 215, 0, 0.6) !important; /* Slightly darker golden yellow on hover */
-}
-
-.cell.less-obvious.highlighted {
-  background-color: rgba(255, 215, 0, 0.7) !important; /* Even darker when highlighted */
+  background-color: rgba(255, 255, 0, 0.4) !important;
 }
 
 .initialValue {
