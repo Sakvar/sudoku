@@ -23,6 +23,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
   const [highlightedCells, setHighlightedCells] = React.useState<Set<number>>(new Set());
   const [highlightedHints, setHighlightedHints] = React.useState<Set<number>>(new Set());
   const [isPencilMode, setIsPencilMode] = React.useState(false);
+  const [selectedCell, setSelectedCell] = React.useState<number | null>(null);
 
   const calculateHighlights = React.useCallback((cells: Cells | null, index: number, value: Digits, settings: GameSettingsType) => {
     if (!cells) return {
@@ -152,6 +153,13 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
   const handleCellClick = (index: number) => {
     if (cells) {
       const cell = cells[index];
+      
+      // If clicking the already selected cell, open editor
+      if (selectedCell === index && cell.isChangeable) {
+        setSelectedForEdit(index);
+      }
+      
+      setSelectedCell(index);
       setClickedCell(index);
       
       // Calculate highlights for the clicked cell
@@ -163,6 +171,7 @@ export default function GameBoard({ cells, onCellValueChange, onCellHintToggle, 
 
   const handleCellDoubleClick = (index: number) => {
     if (cells && cells[index].isChangeable) {
+      setSelectedCell(index);
       setSelectedForEdit(index);
     }
   };

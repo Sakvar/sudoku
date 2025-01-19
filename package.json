@@ -1,6 +1,6 @@
 {
   "name": "sudoku",
-  "version": "0.1.56",
+  "version": "0.1.58",
   "private": true,
   "scripts": {
     "dev": "next dev",

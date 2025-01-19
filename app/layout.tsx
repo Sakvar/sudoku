@@ -44,8 +44,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-  console.log("Process.env: ", JSON.stringify(process.env)); // This logs on the server during build/runtime
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
